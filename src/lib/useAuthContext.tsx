@@ -1,3 +1,5 @@
+"use client";
+
 import { UseAuthContextProps } from "@/interfaces/use-auth-context-interface";
 import { createContext, ReactNode, useContext } from "react";
 
