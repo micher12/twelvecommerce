@@ -1,6 +1,5 @@
 import { cookies } from 'next/headers';
 import { NextResponse, NextRequest } from 'next/server'
-import { useQueryClient } from "@tanstack/react-query"
  
 const publicRoutes = [
     {path: "/", whenAuthenticated: "redirect", to: "/home"},
@@ -36,7 +35,7 @@ export async function middleware(request: NextRequest) {
         .then(res => res.json());
 
         if(res.sucesso){
-            uid = res.uid,
+            uid = res.uid;
             Authentiqued = true;
         }
     }

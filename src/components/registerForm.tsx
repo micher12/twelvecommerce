@@ -1,7 +1,7 @@
 "use client";
 
 import { Checkbox } from "./ui/checkbox";
-import { LogIn } from "lucide-react";
+import { Eye, EyeClosed, LogIn } from "lucide-react";
 import { FormProvider, useForm } from "react-hook-form";
 import { Button } from "./ui/button";
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from "./ui/card";
@@ -12,17 +12,22 @@ import z from "zod";
 import { zodResolver } from "@hookform/resolvers/zod";
 import Link from "next/link";
 import { InputMask } from 'primereact/inputmask';
-import { getContext } from "@/lib/useContext";
+import { useGetContext } from "@/lib/useContext";
 import { UseContextProps } from "@/interfaces/use-context-interface";
 import { AuthUserRegister } from "@/models/user-register";
 import { useState } from "react";
 import { verifyEmail } from "@/models/verify-email";
 import { InputOTP, InputOTPGroup, InputOTPSlot } from "./ui/input-otp";
+import { getAuth, GoogleAuthProvider, signInWithPopup } from "firebase/auth";
 import { useRouter } from "next/navigation";
+import { getFirebaseConfig } from "@/lib/use-firebase-config";
+import { FirebaseApp, getApp, initializeApp } from "firebase/app";
+import { AuthGoogleLogin } from "@/models/user-google-login";
 
 export function RegisterForm(){
 
-    const { setAlert } = getContext() as UseContextProps;
+    const { setAlert, setLoader } = useGetContext() as UseContextProps;
+
     const router = useRouter();
 
     const formSchema = z.object({
@@ -43,6 +48,7 @@ export function RegisterForm(){
 
     const [codeVisible, setCodeVisible] = useState<string | null>(null);
     const [data, setData] = useState<formProps | null>(null);
+    const [typePassword, setTypePassword] = useState<"password" | "text">("password");
 
     const form = useForm<formProps>({
         resolver: zodResolver(formSchema),
@@ -57,7 +63,22 @@ export function RegisterForm(){
     })
 
     async function verifyCode(value: string){
-        if(value === codeVisible as string){
+        try {
+            if(value.length < 6) return;
+
+            const code = await fetch("/api/verify-code",{
+                method: "POST",
+                body: JSON.stringify({value}),
+                headers:{
+                    "Content-type":"application/json",
+                    Authorization: `Bearer ${codeVisible}`
+                }
+            }).then(res => res.json());
+
+            if(!code.sucesso)
+                return setAlert("erro", code.erro);
+
+            setLoader(true);
             const res = await AuthUserRegister(data as formProps);
             
             if(res !== "ok")
@@ -66,26 +87,74 @@ export function RegisterForm(){
             setAlert("sucesso", "Usuário cadastrado com sucesso!");
             router.push("/profile");
             return 
+            
+        } finally {
+            setLoader(false);
         }
+        
     }
 
     async function onSubmit({ name, email, phone, password, remember, politics }: formProps){
-        if(!politics) return setAlert("erro", "É preciso aceitar as políticas para criar uma conta");
+        try {
+            setLoader(true);
+            if(!politics) return setAlert("erro", "É preciso aceitar as políticas para criar uma conta");
 
-        const code = await verifyEmail(email);
+            const code = await verifyEmail(email);
 
-        setAlert("sucesso", "Código enviado para seu e-mail!");
+            if(!code) return setAlert("erro", "Conta já cadastrada!")
 
-        setCodeVisible(code);
+            setAlert("sucesso", "Código enviado para seu e-mail!");
 
-        setData({
-            email,
-            name,
-            password,
-            phone,
-            politics,
-            remember
-        })
+            setCodeVisible(code);
+
+            setData({
+                email,
+                name,
+                password,
+                phone,
+                politics,
+                remember
+            })
+
+            return;
+        } finally {
+            setLoader(false);
+        }
+    }
+
+    async function googleLogin(){
+        try {
+
+            const { firebaseConfig } = await getFirebaseConfig();
+            let app: FirebaseApp;
+
+            try {
+                app = getApp();
+            } catch {
+                app = initializeApp(firebaseConfig);
+            }
+
+            const auth = getAuth(app);
+
+            const googleProvider = new GoogleAuthProvider();
+
+            const token = await signInWithPopup(auth, googleProvider).then(res => res.user.getIdToken());
+
+            setLoader(true);
+            const res = await AuthGoogleLogin(token);
+
+            if(res !== "ok")
+                return setAlert("erro", res);
+
+            setAlert("sucesso", "Logado com sucesso!");
+
+            router.push("/profile");
+            return;
+
+        } finally {
+            setLoader(false);
+        }
+        
     }
 
     return(
@@ -99,7 +168,7 @@ export function RegisterForm(){
             <CardContent className="flex flex-col gap-4">
                 {!codeVisible ? 
                 <>
-                <div className="cursor-pointer border py-1 px-4 flex items-center gap-1 w-fit rounded-full text-sm font-semibold hover:text-white hover:bg-zinc-500/50 transition mb-4" ><GoogleIcon className="w-4 h-4" /> Google</div>
+                <div onClick={googleLogin} className="cursor-pointer border py-1 px-4 flex items-center gap-1 w-fit rounded-full text-sm font-semibold hover:text-white hover:bg-zinc-500/50 transition mb-4" ><GoogleIcon className="w-4 h-4" /> Google</div>
                 <FormProvider {...form}>
                     <form onSubmit={form.handleSubmit(onSubmit)} className="flex flex-col gap-5">
 
@@ -136,7 +205,7 @@ export function RegisterForm(){
                             name="phone"
                             render={({ field }) => (
                                 <FormItem>
-                                <FormLabel>Email</FormLabel>
+                                <FormLabel>Telefone</FormLabel>
                                 <FormControl>
                                     <InputMask disabled={form.formState.isSubmitting} className="file:text-foreground placeholder:text-muted-foreground selection:bg-primary selection:text-primary-foreground dark:bg-input/30 border-input flex h-9 w-full min-w-0 rounded-md border bg-transparent px-3 py-1 text-base shadow-xs transition-[color,box-shadow] outline-none file:inline-flex file:h-7 file:border-0 file:bg-transparent file:text-sm file:font-medium disabled:pointer-events-none disabled:cursor-not-allowed disabled:opacity-50 md:text-sm focus-visible:border-ring focus-visible:ring-ring/50 focus-visible:ring-[3px] aria-invalid:ring-destructive/20 dark:aria-invalid:ring-destructive/40 aria-invalid:border-destructive" mask="(99) 99999-9999" autoClear={false} placeholder="(00) 91111-2222" {...field} />
                                 </FormControl>
@@ -152,7 +221,12 @@ export function RegisterForm(){
                                 <FormItem>
                                 <FormLabel>Senha</FormLabel>
                                 <FormControl>
-                                    <Input disabled={form.formState.isSubmitting} type="password" placeholder="Sua senha..." {...field} />
+                                    <div className="flex flex-items-center justify-between gap-3">
+                                        <Input disabled={form.formState.isSubmitting} type={typePassword} placeholder="Sua senha..." {...field} />
+                                        <div onClick={()=> setTypePassword(prev=> prev === "password" ? "text" : "password")} className="p-2 bg-zinc-700/50 rounded-lg cursor-pointer hover:bg-zinc-700" >
+                                            {typePassword === "text" ? <Eye className="w-5 h-5" /> : <EyeClosed className="w-5 h-5" />}
+                                        </div>
+                                    </div>
                                 </FormControl>
                                 <FormMessage />
                                 </FormItem>

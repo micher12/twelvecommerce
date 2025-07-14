@@ -1,3 +1,5 @@
+"use server";
+
 import Cloudflare from "cloudflare";
 
 export async function connection<T>(sql: string, params: string[] | undefined = undefined){
@@ -14,13 +16,17 @@ export async function connection<T>(sql: string, params: string[] | undefined = 
         }).then(res => res.result[0].results).catch(err => {throw new Error(err)})
 
         return result as T;
+
     } catch (error) {
         const erro = error as Error
+        const message = erro.message;
 
-        if(erro.message.includes("You do not have permission to perform this operation.")){
-            return 401
+        console.log(message);
+
+        if(message.includes("You do not have permission to perform this operation.")){
+            return null
         }
 
-        return 400;
+        return null;
     }
 }

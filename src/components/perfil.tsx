@@ -5,26 +5,27 @@ import { Button } from "./ui/button";
 import { Card, CardDescription, CardHeader, CardTitle } from "./ui/card";
 import { AuthUserLogOut } from "@/models/user-logout";
 import { UseContextProps } from "@/interfaces/use-context-interface";
-import { getContext } from "@/lib/useContext";
+import { useGetContext } from "@/lib/useContext";
 import { useRouter } from "next/navigation";
 import { useQuery } from "@tanstack/react-query";
-import { UserRecord } from "firebase-admin/auth";
+import { useUserInterface } from "@/interfaces/use-user-interface";
 
 export function Perfil(){
 
-    const { setAlert } = getContext() as UseContextProps;
+    const { setAlert } = useGetContext() as UseContextProps;
     const router = useRouter();
 
     const { data } = useQuery({
         queryKey: ["user"],
         queryFn: async ()=>{
-            const res: {sucesso?: "ok", user?: UserRecord, erro?: "Inváldio"} = await fetch("/api/user").then(res => res.json());
+            const res: {sucesso?: "ok", user?: useUserInterface, erro?: "Inváldio"} = await fetch("/api/user").then(res => res.json());
 
             if(res.sucesso)
                 return res.user
 
             return null;
-        }
+        },
+        refetchOnMount: false
     })
 
 
@@ -47,7 +48,7 @@ export function Perfil(){
                 <CardDescription>
                     {data && (
                         <>
-                        <h2>Olá, {data.displayName}! Seja bem vindo!</h2>
+                        <h2>Olá, {data.name_user}! Seja bem vindo!</h2>
                         </>
                     )}
                 </CardDescription>

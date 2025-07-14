@@ -1,6 +1,7 @@
 "use client";
 
 import { Alert } from "@/components/ui/alert";
+import { Loader } from "@/components/ui/loader";
 import { UseContextProps } from "@/interfaces/use-context-interface";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { createContext, ReactNode, useContext, useEffect, useState } from "react";
@@ -11,6 +12,7 @@ export function ContextProvider({children}: {children: ReactNode}){
 
     const [alertType, setAlertType] = useState<"sucesso" | "erro" | "warning" | null>(null);
     const [alertMessage, setAlertMessage] = useState<string>("");
+    const [loader, setLoader] = useState(false);
     const queryClient = new QueryClient();
 
     function setAlert(type: typeof alertType, message: string){
@@ -34,16 +36,18 @@ export function ContextProvider({children}: {children: ReactNode}){
     return (    
         <ThisContext 
         value={{
-            setAlert
+            setAlert,
+            setLoader,
         }}>
             <QueryClientProvider client={queryClient}>
                 {children}
             </QueryClientProvider>
             <Alert type={alertType} message={alertMessage} />
+            <Loader type={loader} />
         </ThisContext>
     )
 }
 
-export function getContext(){
+export function useGetContext(){
     return useContext(ThisContext);
 }

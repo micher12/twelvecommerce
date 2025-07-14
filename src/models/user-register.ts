@@ -1,12 +1,11 @@
 "use server";
 
 import admin from "@/lib/AdminAuth";
-import { createHash } from "crypto";
 import { connectionAdmin } from "./connectionAdmin";
-import { sendmail } from "./sendmail";
-import { getAuth, signInWithEmailAndPassword } from "firebase/auth";
+import {  getAuth, signInWithEmailAndPassword } from "firebase/auth";
 import { FirebaseApp, FirebaseOptions, getApp, initializeApp } from "firebase/app";
 import { cookies } from "next/headers";
+import CryptoJS from "crypto-js";
 
 type formProps = {
     name: string;
@@ -43,15 +42,13 @@ export async function AuthUserRegister({ name, email, password, phone, remember 
         const auth = getAuth(app);
 
     
-        const thisPassword = `${password}${process.env.PASSWORD_HASH}`;
-
-        const encodedPassword = createHash("sha256").update(thisPassword).digest("base64");
+        const encodedPassword = CryptoJS.AES.encrypt(password, process.env.PASSWORD_HASH as string).toString();
 
         const connection = connectionAdmin("INSERT INTO user (name_user, email_user, phone_user, password_user, createdat) VALUES(?,?,?,?,?)", [name, email, phone, encodedPassword, new Date().toISOString()]);
 
         const signIn = signInWithEmailAndPassword(auth, user.email as string, password);
 
-        const [ _, userCredential ] = await Promise.all([
+        const [, userCredential ] = await Promise.all([
             await connection,
             await signIn
         ])

@@ -12,15 +12,19 @@ import z from "zod";
 import { zodResolver } from "@hookform/resolvers/zod";
 import Link from "next/link";
 import { AuthUserLogin } from "@/models/user-login";
-import { getContext } from "@/lib/useContext";
+import { useGetContext } from "@/lib/useContext";
 import { UseContextProps } from "@/interfaces/use-context-interface";
 import { useRouter } from "next/navigation";
-import { Badge } from "./ui/badge";
 import { useState } from "react";
+import { getFirebaseConfig } from "@/lib/use-firebase-config";
+import { FirebaseApp, getApp, initializeApp } from "firebase/app";
+import { getAuth, GoogleAuthProvider, signInWithPopup } from "firebase/auth";
+import { AuthGoogleLogin } from "@/models/user-google-login";
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogOverlay, AlertDialogTitle, AlertDialogTrigger } from "./ui/alert-dialog";
 
 export function LoginForm(){
 
-    const { setAlert } = getContext() as UseContextProps;
+    const { setAlert, setLoader } = useGetContext() as UseContextProps;
     const router = useRouter();
 
     const formSchema = z.object({
@@ -49,16 +53,68 @@ export function LoginForm(){
     const [typePassword, changeTypePassword] = useState<"text" | "password">("password");
 
     async function onSubmit({email, password, remember}: formProps){
+        try {
+            setLoader(true);
 
-        const res = await AuthUserLogin(email, password, remember);
+            const res = await AuthUserLogin(email, password, remember);
 
-        if(res !== "ok")
-           return setAlert("erro", res);
+            if(res !== "ok")
+            return setAlert("erro", res);
 
-        setAlert("sucesso", "Logado com sucesso")
-        router.push("/profile");
-        return;
+            setAlert("sucesso", "Logado com sucesso")
+            router.push("/profile");
+            return;
 
+        } finally {
+            setLoader(false);
+        }
+    }
+
+    async function loginWithGoogle(){
+        try {
+            const { firebaseConfig } = await getFirebaseConfig();
+
+            let app: FirebaseApp;
+
+            try {
+                app = getApp();
+            } catch {
+                app = initializeApp(firebaseConfig);
+            }
+
+            const auth = getAuth(app);
+
+            const googleProvider = new GoogleAuthProvider();
+
+            const token = await signInWithPopup(auth, googleProvider).then(res => res.user.getIdToken());
+
+            setLoader(true);
+            const res = await AuthGoogleLogin(token);
+
+            if(res !== "ok")
+                return setAlert("erro", res);
+
+            setAlert("sucesso", "Logado com sucesso!");
+
+            router.push("/profile");
+            return;
+
+        } finally {
+            setLoader(false);
+        }
+    }
+
+    async function submitRecoverPassword(){
+        const form = document.getElementById("recoverPass");
+
+        if(!form) return;
+
+        const data = new FormData(form as HTMLFormElement);
+
+        const email = data.get("email");
+
+        // to continue
+        console.log(email);
     }
 
     return(
@@ -70,7 +126,7 @@ export function LoginForm(){
                 </CardDescription>
             </CardHeader>
             <CardContent className="flex flex-col gap-4">
-                <div className="cursor-pointer border py-1 px-4 flex items-center gap-1 w-fit rounded-full text-sm font-semibold hover:text-white hover:bg-zinc-500/50 transition mb-4" ><GoogleIcon className="w-4 h-4" /> Google</div>
+                <div onClick={loginWithGoogle} className="cursor-pointer border py-1 px-4 flex items-center gap-1 w-fit rounded-full text-sm font-semibold hover:text-white hover:bg-zinc-500/50 transition mb-4" ><GoogleIcon className="w-4 h-4" /> Google</div>
 
                 <FormProvider {...form}>
                     <form onSubmit={form.handleSubmit(onSubmit)} className="flex flex-col gap-5">
@@ -126,7 +182,34 @@ export function LoginForm(){
                 
                                 <label htmlFor="rember" className="text-sm">Lembrar de mim</label>
                             </div>
-                            <div className="text-xs hover:underline cursor-pointer text-zinc-400 hover:text-white transition font-semibold">Esqueceu a senha?</div>
+                            <AlertDialog>
+                                <AlertDialogTrigger >
+                                    <div className="text-xs hover:underline cursor-pointer text-zinc-400 hover:text-white transition font-semibold">Esqueceu a senha?</div>
+                                </AlertDialogTrigger>
+                                <AlertDialogContent >
+              
+                                    <form id="recoverPass" >
+                                        <AlertDialogHeader>
+                                            <AlertDialogTitle>
+                                                Esqueceu a senha ?
+                                            </AlertDialogTitle>
+                                            <AlertDialogDescription>
+                                                Insira seu e-mail para recuperar a senha.
+                                            </AlertDialogDescription>
+                                            <div className="my-2">
+                                                <Input name="email" placeholder="meu_email@gmail.com" className="text-white" />
+                                            </div>
+                                        </AlertDialogHeader>
+                                        <AlertDialogFooter className="mt-2">
+                                            <AlertDialogCancel className="cursor-pointer">Cancelar</AlertDialogCancel>
+                                            <AlertDialogAction onClick={submitRecoverPassword} >Recuperar</AlertDialogAction>
+                                        </AlertDialogFooter>
+                                    </form>
+                    
+                                </AlertDialogContent>
+                                <AlertDialogOverlay className="backdrop-blur-xs" />
+                          
+                            </AlertDialog>
                         </div>
                         <Button type="submit" className="cursor-pointer">Entrar</Button>
                         

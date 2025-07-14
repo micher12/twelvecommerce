@@ -1,3 +1,5 @@
+"use server";
+
 import Cloudflare from "cloudflare";
 
 export async function connectionAdmin<T>(sql: string, params: string[] | undefined = undefined){

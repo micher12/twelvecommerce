@@ -1,7 +1,6 @@
 "use server";
 
 import nodemailer from "nodemailer"
-import { BadgeCheck } from "lucide-react";
 
 export async function sendmail(email: string){
 
