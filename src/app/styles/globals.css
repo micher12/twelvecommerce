@@ -3,6 +3,10 @@
 
 @custom-variant dark (&:is(.dark *));
 
+@theme {
+    --breakpoint-xs: 500px;
+}
+
 @theme inline {
   --color-background: var(--background);
   --color-foreground: var(--foreground);
@@ -134,4 +138,45 @@ body {
 
 .container-xl{
     max-width: 1500px;
+}
+
+.fadeIn{
+    animation: fadeIn 1.4s ease forwards;
+}
+
+.fadeOut{
+    animation: fadeOut 1.4s ease forwards;
+}
+
+@keyframes fadeIn {
+    0%{
+        opacity: 0;
+        filter: blur(8px);
+    }
+    70%{
+        filter: blur(0);
+    }
+    100%{
+        opacity: 1;
+    }
+}
+
+@keyframes fadeOut {
+    0%{
+        opacity: 1;
+        filter: blur(0);
+    }
+    70%{
+        filter: blur(8px);
+    }
+    100%{
+        opacity: 0;
+    }
+}
+
+
+@media screen and (max-width: 500px){
+    .container{
+        width: 95%;
+    }
 }

@@ -1,4 +1,6 @@
+import { cookies } from 'next/headers';
 import { NextResponse, NextRequest } from 'next/server'
+import { useQueryClient } from "@tanstack/react-query"
  
 const publicRoutes = [
     {path: "/", whenAuthenticated: "redirect", to: "/home"},
@@ -12,11 +14,32 @@ const publicRoutes = [
 ] as const;
 
 
-export function middleware(request: NextRequest) {
+export async function middleware(request: NextRequest) {
 
     const path = request.nextUrl.pathname;
     const url = request.nextUrl;
-    const authToken = false;
+    let Authentiqued = false;
+    let uid: string | null = null;
+
+    const cookie = await cookies();
+
+    const session = cookie.get("session");
+
+    if(session){          
+
+        const res = await fetch(`${url.origin}/api/auth/me`, {
+            headers:{
+                Cookie: session.value
+            },
+            cache: 'no-store',
+        })
+        .then(res => res.json());
+
+        if(res.sucesso){
+            uid = res.uid,
+            Authentiqued = true;
+        }
+    }
 
     const publicRoute = publicRoutes.find(route => route.path === path);
 
@@ -24,13 +47,13 @@ export function middleware(request: NextRequest) {
         return NextResponse.next();
 
     // Logado + rota publica + redirecionar.
-    if(publicRoute && publicRoute.whenAuthenticated === "redirect" && authToken){
+    if(publicRoute && publicRoute.whenAuthenticated === "redirect" && Authentiqued){
         url.pathname = publicRoute.to;
         return NextResponse.redirect(url);
     }
 
     //rota publica + não logado
-    if(publicRoute && publicRoute.whenAuthenticated === "redirect" && !authToken){
+    if(publicRoute && publicRoute.whenAuthenticated === "redirect" && !Authentiqued){
         // Verifica se está no endereço principal.
         if(publicRoute.path === "/"){
             url.pathname = publicRoute.to;
@@ -41,27 +64,33 @@ export function middleware(request: NextRequest) {
     }
 
     // Se é rota publica e precisa estar logado
-    if(publicRoute && publicRoute.whenAuthenticated === "next" && authToken){
+    if(publicRoute && publicRoute.whenAuthenticated === "next" && Authentiqued){
         return NextResponse.next();
     }
 
     // Se é rota publica e precisa estar logado e NÃO ESTOU LOGADO
-    if(publicRoute && publicRoute.whenAuthenticated === "next" && !authToken){
+    if(publicRoute && publicRoute.whenAuthenticated === "next" && !Authentiqued){
         url.pathname = "/login";
         return NextResponse.redirect(url);
     }
 
     // Se não é rota pública e não está logado
-    if(!publicRoute && !authToken){
+    if(!publicRoute && !Authentiqued){
         url.pathname = "/home"
         return NextResponse.redirect(url);
     }
 
     // Se não é rota publica e está logado
-    if(!publicRoute && authToken){
+    if(!publicRoute && Authentiqued && uid){
         // Verificar level_user
 
-        return NextResponse.next();
+        const admin_uid = new Set(JSON.parse(process.env.ADMIN_UID as string) as string[]);
+
+        if(admin_uid.has(uid))
+            return NextResponse.next();
+
+        url.pathname = "/home"
+        return NextResponse.redirect(url);
     }
 
     return NextResponse.next();

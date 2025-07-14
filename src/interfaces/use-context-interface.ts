@@ -1,3 +1,3 @@
 export interface UseContextProps{
-    name: string
+    setAlert: (type: "sucesso" | "erro" | "warning" | null, message: string) => void
 }

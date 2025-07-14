@@ -1,7 +1,7 @@
 "use client";
 
 import { Checkbox } from "./ui/checkbox";
-import { LogIn } from "lucide-react";
+import { Eye, EyeClosed, LogIn } from "lucide-react";
 import { FormProvider, useForm } from "react-hook-form";
 import { Button } from "./ui/button";
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from "./ui/card";
@@ -11,18 +11,28 @@ import { Input } from "./ui/input";
 import z from "zod";
 import { zodResolver } from "@hookform/resolvers/zod";
 import Link from "next/link";
+import { AuthUserLogin } from "@/models/user-login";
+import { getContext } from "@/lib/useContext";
+import { UseContextProps } from "@/interfaces/use-context-interface";
+import { useRouter } from "next/navigation";
+import { Badge } from "./ui/badge";
+import { useState } from "react";
 
 export function LoginForm(){
 
+    const { setAlert } = getContext() as UseContextProps;
+    const router = useRouter();
+
     const formSchema = z.object({
-        email: z.string().min(10, {
+        email: z.string().trim().min(10, {
             message: "Mínimo de 10 caracteres."
         }),
         password: z.string()
+        .trim()
         .min(6, {message: "Mínimo de 6 caracteres."})
         .refine(pass=> /[0-9]/.test(pass), {message: "A senha deve conter pelo menos um número"})
         .refine(pass => /[!@#$%&*]/.test(pass), {message: "A senha deve conter pelo menos um caractere especial válido: (!@#$%&*)."}),
-        remember: z.boolean().optional(),
+        remember: z.boolean(),
     })
 
     type formProps = z.infer<typeof formSchema>
@@ -36,12 +46,23 @@ export function LoginForm(){
         }
     })
 
+    const [typePassword, changeTypePassword] = useState<"text" | "password">("password");
+
     async function onSubmit({email, password, remember}: formProps){
-        console.log(email,password,remember)
+
+        const res = await AuthUserLogin(email, password, remember);
+
+        if(res !== "ok")
+           return setAlert("erro", res);
+
+        setAlert("sucesso", "Logado com sucesso")
+        router.push("/profile");
+        return;
+
     }
 
     return(
-        <Card className="basis-1/2 mt-10">
+        <Card className="basis-1/1 xs:basis-4/5 lg:basis-1/2 mt-10">
             <CardHeader>
                 <CardTitle className="text-2xl font-bold flex items-center justify-between gap-3">Entrar <LogIn className="w-6 h-6"/></CardTitle>
                 <CardDescription>
@@ -75,7 +96,12 @@ export function LoginForm(){
                                 <FormItem>
                                 <FormLabel>Senha</FormLabel>
                                 <FormControl>
-                                    <Input type="password" placeholder="Sua senha..." {...field} />
+                                    <div className="flex items-center justify-between gap-3">
+                                        <Input type={typePassword} placeholder="Sua senha..."  {...field} />
+                                        <div onClick={()=> changeTypePassword(prev=> prev === "password" ? "text" : "password")} className="p-2 bg-zinc-700/50 rounded-lg cursor-pointer hover:bg-zinc-700" >
+                                            {typePassword === "text" ? <Eye className="w-5 h-5" /> : <EyeClosed className="w-5 h-5" />}
+                                        </div>
+                                    </div>
                                 </FormControl>
                                 <FormMessage />
                                 </FormItem>

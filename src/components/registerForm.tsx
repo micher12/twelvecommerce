@@ -12,8 +12,18 @@ import z from "zod";
 import { zodResolver } from "@hookform/resolvers/zod";
 import Link from "next/link";
 import { InputMask } from 'primereact/inputmask';
+import { getContext } from "@/lib/useContext";
+import { UseContextProps } from "@/interfaces/use-context-interface";
+import { AuthUserRegister } from "@/models/user-register";
+import { useState } from "react";
+import { verifyEmail } from "@/models/verify-email";
+import { InputOTP, InputOTPGroup, InputOTPSlot } from "./ui/input-otp";
+import { useRouter } from "next/navigation";
 
 export function RegisterForm(){
+
+    const { setAlert } = getContext() as UseContextProps;
+    const router = useRouter();
 
     const formSchema = z.object({
         name: z.string().trim().min(5, {message: "Mínimo de 5 caracteres"}),
@@ -25,11 +35,14 @@ export function RegisterForm(){
             .min(6, {message: "Mínimo de 6 caracteres."})
             .refine(pass=> /[0-9]/.test(pass), {message: "A senha deve conter pelo menos um número"})
             .refine(pass => /[!@#$%&*]/.test(pass), {message: "A senha deve conter pelo menos um caractere especial válido: (!@#$%&*)."}),
-        remember: z.boolean().optional(),
+        remember: z.boolean(),
         politics: z.boolean().refine(val => val === true, {message: "É preciso concordar com os termos de uso!"}),
     })
 
     type formProps = z.infer<typeof formSchema>
+
+    const [codeVisible, setCodeVisible] = useState<string | null>(null);
+    const [data, setData] = useState<formProps | null>(null);
 
     const form = useForm<formProps>({
         resolver: zodResolver(formSchema),
@@ -43,12 +56,40 @@ export function RegisterForm(){
         }
     })
 
+    async function verifyCode(value: string){
+        if(value === codeVisible as string){
+            const res = await AuthUserRegister(data as formProps);
+            
+            if(res !== "ok")
+                return setAlert("erro", res);
+
+            setAlert("sucesso", "Usuário cadastrado com sucesso!");
+            router.push("/profile");
+            return 
+        }
+    }
+
     async function onSubmit({ name, email, phone, password, remember, politics }: formProps){
-        console.log(name,email,phone,password,remember, politics)
+        if(!politics) return setAlert("erro", "É preciso aceitar as políticas para criar uma conta");
+
+        const code = await verifyEmail(email);
+
+        setAlert("sucesso", "Código enviado para seu e-mail!");
+
+        setCodeVisible(code);
+
+        setData({
+            email,
+            name,
+            password,
+            phone,
+            politics,
+            remember
+        })
     }
 
     return(
-        <Card className="basis-1/2 mt-10">
+        <Card className="basis-1/1 xs:basis-4/5 lg:basis-1/2 mt-10">
             <CardHeader>
                 <CardTitle className="text-2xl font-bold flex items-center justify-between gap-3">Registrar-se <LogIn className="w-6 h-6"/></CardTitle>
                 <CardDescription>
@@ -56,6 +97,8 @@ export function RegisterForm(){
                 </CardDescription>
             </CardHeader>
             <CardContent className="flex flex-col gap-4">
+                {!codeVisible ? 
+                <>
                 <div className="cursor-pointer border py-1 px-4 flex items-center gap-1 w-fit rounded-full text-sm font-semibold hover:text-white hover:bg-zinc-500/50 transition mb-4" ><GoogleIcon className="w-4 h-4" /> Google</div>
                 <FormProvider {...form}>
                     <form onSubmit={form.handleSubmit(onSubmit)} className="flex flex-col gap-5">
@@ -67,7 +110,7 @@ export function RegisterForm(){
                                 <FormItem>
                                 <FormLabel>Nome completo</FormLabel>
                                 <FormControl>
-                                    <Input placeholder="Seu nome..." {...field} />
+                                    <Input disabled={form.formState.isSubmitting}  placeholder="Seu nome..." {...field} />
                                 </FormControl>
                                 <FormMessage />
                                 </FormItem>
@@ -81,7 +124,7 @@ export function RegisterForm(){
                                 <FormItem>
                                 <FormLabel>Email</FormLabel>
                                 <FormControl>
-                                    <Input type="email" placeholder="meu_email@gmail.com" {...field} />
+                                    <Input disabled={form.formState.isSubmitting} type="email" placeholder="meu_email@gmail.com" {...field} />
                                 </FormControl>
                                 <FormMessage />
                                 </FormItem>
@@ -95,7 +138,7 @@ export function RegisterForm(){
                                 <FormItem>
                                 <FormLabel>Email</FormLabel>
                                 <FormControl>
-                                    <InputMask className="file:text-foreground placeholder:text-muted-foreground selection:bg-primary selection:text-primary-foreground dark:bg-input/30 border-input flex h-9 w-full min-w-0 rounded-md border bg-transparent px-3 py-1 text-base shadow-xs transition-[color,box-shadow] outline-none file:inline-flex file:h-7 file:border-0 file:bg-transparent file:text-sm file:font-medium disabled:pointer-events-none disabled:cursor-not-allowed disabled:opacity-50 md:text-sm focus-visible:border-ring focus-visible:ring-ring/50 focus-visible:ring-[3px] aria-invalid:ring-destructive/20 dark:aria-invalid:ring-destructive/40 aria-invalid:border-destructive" mask="(99) 99999-9999" autoClear={false} placeholder="(00) 91111-2222" {...field} />
+                                    <InputMask disabled={form.formState.isSubmitting} className="file:text-foreground placeholder:text-muted-foreground selection:bg-primary selection:text-primary-foreground dark:bg-input/30 border-input flex h-9 w-full min-w-0 rounded-md border bg-transparent px-3 py-1 text-base shadow-xs transition-[color,box-shadow] outline-none file:inline-flex file:h-7 file:border-0 file:bg-transparent file:text-sm file:font-medium disabled:pointer-events-none disabled:cursor-not-allowed disabled:opacity-50 md:text-sm focus-visible:border-ring focus-visible:ring-ring/50 focus-visible:ring-[3px] aria-invalid:ring-destructive/20 dark:aria-invalid:ring-destructive/40 aria-invalid:border-destructive" mask="(99) 99999-9999" autoClear={false} placeholder="(00) 91111-2222" {...field} />
                                 </FormControl>
                                 <FormMessage />
                                 </FormItem>
@@ -109,7 +152,7 @@ export function RegisterForm(){
                                 <FormItem>
                                 <FormLabel>Senha</FormLabel>
                                 <FormControl>
-                                    <Input type="password" placeholder="Sua senha..." {...field} />
+                                    <Input disabled={form.formState.isSubmitting} type="password" placeholder="Sua senha..." {...field} />
                                 </FormControl>
                                 <FormMessage />
                                 </FormItem>
@@ -126,7 +169,7 @@ export function RegisterForm(){
                                     return(
                                         <FormItem>
                                         <FormControl>
-                                            <Checkbox id="rember" checked={field.value} onCheckedChange={field.onChange}  />
+                                            <Checkbox disabled={form.formState.isSubmitting} id="rember" checked={field.value} onCheckedChange={field.onChange}  />
                                         </FormControl>
                                         </FormItem>
                                     )}}
@@ -146,7 +189,7 @@ export function RegisterForm(){
                                     <FormItem>
                                     <FormControl >
                                         <div className="flex items-center gap-2">
-                                            <Checkbox id="politics" checked={field.value} onCheckedChange={field.onChange}  />
+                                            <Checkbox disabled={form.formState.isSubmitting} id="politics" checked={field.value} onCheckedChange={field.onChange}  />
                                             <label htmlFor="politics" className="text-sm">Li e aceito os <Link href={"/policy-terms"} className="underline font-bold ">termos</Link> de uso</label>
                                         </div>
                                     </FormControl>
@@ -156,7 +199,7 @@ export function RegisterForm(){
                             />
                         </div>
 
-                        <Button type="submit" className="cursor-pointer">Entrar</Button>
+                        <Button disabled={form.formState.isSubmitting} type="submit" className="cursor-pointer">Registrar</Button>
 
                          <div className="w-full h-0.5 bg-zinc-400/20 rounded-full" />
                         <div className="text-center text-sm">
@@ -164,6 +207,22 @@ export function RegisterForm(){
                         </div>
                     </form>
                 </FormProvider>
+                </>
+                :
+                <div className="w-full flex-col items-center flex justify-center">
+                    <p className="text-sm text-zinc-200 mb-2">Digite o código de 6 digitos enviado para seu e-mail.</p>
+                    <InputOTP maxLength={6} onChange={verifyCode} >
+                        <InputOTPGroup>
+                            <InputOTPSlot index={0} className="h-12 w-12" />
+                            <InputOTPSlot index={1} className="h-12 w-12" />
+                            <InputOTPSlot index={2} className="h-12 w-12" />
+                            <InputOTPSlot index={3} className="h-12 w-12" />
+                            <InputOTPSlot index={4} className="h-12 w-12" />
+                            <InputOTPSlot index={5} className="h-12 w-12" />
+                        </InputOTPGroup>
+                    </InputOTP>
+                </div>
+                }
             </CardContent>
         </Card>
     )

@@ -1,18 +1,45 @@
 "use client";
 
+import { Alert } from "@/components/ui/alert";
 import { UseContextProps } from "@/interfaces/use-context-interface";
-import { createContext, ReactNode, useContext } from "react";
+import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
+import { createContext, ReactNode, useContext, useEffect, useState } from "react";
 
 const ThisContext = createContext<UseContextProps | null>(null);
 
 export function ContextProvider({children}: {children: ReactNode}){
 
+    const [alertType, setAlertType] = useState<"sucesso" | "erro" | "warning" | null>(null);
+    const [alertMessage, setAlertMessage] = useState<string>("");
+    const queryClient = new QueryClient();
+
+    function setAlert(type: typeof alertType, message: string){
+        setAlertType(type);
+        setAlertMessage(message);
+    }
+
+    useEffect(()=>{
+        if(!alertType) return;
+
+        const timer = setTimeout(()=>{
+            setAlert(null, "");
+        },3800);
+
+        return ()=>{
+            clearTimeout(timer);
+        }
+
+    },[alertType]);
+
     return (    
         <ThisContext 
         value={{
-            name: "apenas um teste"
+            setAlert
         }}>
-            {children}
+            <QueryClientProvider client={queryClient}>
+                {children}
+            </QueryClientProvider>
+            <Alert type={alertType} message={alertMessage} />
         </ThisContext>
     )
 }
@@ -20,5 +47,3 @@ export function ContextProvider({children}: {children: ReactNode}){
 export function getContext(){
     return useContext(ThisContext);
 }
-
-
