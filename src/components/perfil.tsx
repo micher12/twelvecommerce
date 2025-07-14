@@ -7,7 +7,7 @@ import { AuthUserLogOut } from "@/models/user-logout";
 import { UseContextProps } from "@/interfaces/use-context-interface";
 import { useGetContext } from "@/lib/useContext";
 import { useRouter } from "next/navigation";
-import { useQuery } from "@tanstack/react-query";
+import { keepPreviousData, useQuery } from "@tanstack/react-query";
 import { useUserInterface } from "@/interfaces/use-user-interface";
 
 export function Perfil(){
@@ -25,7 +25,7 @@ export function Perfil(){
 
             return null;
         },
-        refetchOnMount: false
+        placeholderData: keepPreviousData,
     })
 
 
