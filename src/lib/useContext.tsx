@@ -3,7 +3,7 @@
 import { Alert } from "@/components/ui/alert";
 import { Loader } from "@/components/ui/loader";
 import { UseContextProps } from "@/interfaces/use-context-interface";
-import { QueryCache, QueryClient, QueryClientProvider } from "@tanstack/react-query";
+import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { createContext, ReactNode, useContext, useEffect, useState } from "react";
 
 const ThisContext = createContext<UseContextProps | null>(null);
