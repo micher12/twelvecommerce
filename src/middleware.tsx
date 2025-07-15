@@ -4,7 +4,7 @@ import { NextResponse, NextRequest } from 'next/server'
 const publicRoutes = [
     {path: "/", whenAuthenticated: "redirect", to: "/home"},
     {path: "/home", whenAuthenticated: "ok"},
-    {path: "/sobre", whenAuthenticated: "ok"},
+    {path: "/about", whenAuthenticated: "ok"},
     {path: "/login", whenAuthenticated: "redirect", to: "/profile"},
     {path: "/register", whenAuthenticated: "redirect", to: "/profile"},
     {path: "/profile", whenAuthenticated: "next"},
