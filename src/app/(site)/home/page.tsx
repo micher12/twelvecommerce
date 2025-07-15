@@ -16,7 +16,7 @@ export default async function Home(){
     })
 
     return (
-        <div className="min-h-screen py-28! container-xl">
+        <div className="min-h-screen py-25! sm:py-28! container-xl">
             <HomeComponente heroImages={res} />
         </div>
     )

@@ -137,8 +137,16 @@ body {
     max-width: 1500px;
 }
 
+.myTransition{
+    transition: all .4s ease;
+}
+
 .fadeIn{
     animation: fadeIn 1.4s ease forwards;
+}
+
+.fadeInPop{
+    animation: fadeInPop .6s cubic-bezier(0.68,-0.6,0.32,1.6) forwards;
 }
 
 .fadeOut{
@@ -154,6 +162,21 @@ body {
         filter: blur(0);
     }
     100%{
+        opacity: 1;
+    }
+}
+
+@keyframes fadeInPop {
+    0%{
+        transform: translateY(-15px);
+        opacity: 0;
+        filter: blur(8px);
+    }
+    70%{
+        filter: blur(0);
+    }
+    100%{
+        transform: translateY(0);
         opacity: 1;
     }
 }

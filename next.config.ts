@@ -9,7 +9,8 @@ const nextConfig: NextConfig = {
                 pathname: "/v0/b/**"
             }
         ]
-    }
+    },
+    allowedDevOrigins: ['local-origin.dev', '*.local-origin.dev','192.168.18.2'],
 };
 
 export default nextConfig;

@@ -1,7 +1,8 @@
 import Autoplay from "embla-carousel-autoplay";
 import { Carousel, CarouselContent, CarouselItem, CarouselPrevious, CarouselNext } from "@/components/ui/carousel";
 import Image from "next/image";
-import Link from "next/link";
+import Zoom from "react-medium-image-zoom";
+import 'react-medium-image-zoom/dist/styles.css'
 
 export function Slider({className, images}: {className?: string, images: string[]}){
     return(
@@ -18,18 +19,18 @@ export function Slider({className, images}: {className?: string, images: string[
         >
             <CarouselContent >
                 {images.map((item)=>(
-                    <CarouselItem key={item} className="min-h-[600px] flex items-center justify-center ">
+                    <CarouselItem key={item} className="min-h-[80vh] flex items-center justify-center ">
                         
-                        <Link href={"/"} className="w-full h-auto">
-                            <Image className="pointer-events-auto rounded-xl" style={{width: "100%"}} priority src={item} width={1920} height={1080} quality={100} alt="Teste" />
-                        </Link>
+                        <Zoom>
+                            <Image className="pointer-events-auto rounded-xl object-cover h-[80vh] lg:h-auto" priority src={item} width={1920} height={1080} quality={100} alt="Teste" />
+                        </Zoom>
 
                     </CarouselItem>
                 ))}
                 
             </CarouselContent>
-            <CarouselPrevious className="abosolute top-[50%] left-5 " />
-            <CarouselNext className="absolute top-[50%] right-5" />
+            <CarouselPrevious className="abosolute top-[50%] left-5 backdrop-blur-sm" />
+            <CarouselNext className="absolute top-[50%] right-5 backdrop-blur-sm" />
         </Carousel>
     )
 }
