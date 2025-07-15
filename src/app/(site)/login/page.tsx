@@ -1,10 +1,6 @@
-"use client";
-
 import { LoginForm } from "@/components/loginForm";
 
-export default function Login(){
-
-    
+export default async function Login(){
 
     return (
         <div className="min-h-screen py-25! container">

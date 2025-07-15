@@ -20,9 +20,11 @@ import { verifyEmail } from "@/models/verify-email";
 import { InputOTP, InputOTPGroup, InputOTPSlot } from "./ui/input-otp";
 import { getAuth, GoogleAuthProvider, signInWithPopup } from "firebase/auth";
 import { useRouter } from "next/navigation";
-import { getFirebaseConfig } from "@/lib/use-firebase-config";
-import { FirebaseApp, getApp, initializeApp } from "firebase/app";
 import { AuthGoogleLogin } from "@/models/user-google-login";
+import { FirebaseApp, getApp, initializeApp } from "firebase/app";
+import { getFirebaseConfig } from "@/lib/use-firebase-config";
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogOverlay, AlertDialogTitle, AlertDialogTrigger } from "./ui/alert-dialog";
+import { recoverPassword } from "@/models/recover-password";
 
 export function RegisterForm(){
 
@@ -49,6 +51,7 @@ export function RegisterForm(){
     const [codeVisible, setCodeVisible] = useState<string | null>(null);
     const [data, setData] = useState<formProps | null>(null);
     const [typePassword, setTypePassword] = useState<"password" | "text">("password");
+    const [open, setOpen] = useState(false);
 
     const form = useForm<formProps>({
         resolver: zodResolver(formSchema),
@@ -125,12 +128,13 @@ export function RegisterForm(){
     async function googleLogin(){
         try {
 
-            const { firebaseConfig } = await getFirebaseConfig();
-            let app: FirebaseApp;
+            const firebaseConfig = await getFirebaseConfig();
 
+            let app: FirebaseApp;
+            
             try {
                 app = getApp();
-            } catch {
+            } catch  {
                 app = initializeApp(firebaseConfig);
             }
 
@@ -155,6 +159,39 @@ export function RegisterForm(){
             setLoader(false);
         }
         
+    }
+
+    async function submitRecoverPassword(e: React.MouseEvent<HTMLButtonElement>){
+        e.preventDefault();
+
+        const form = document.getElementById("recoverPass");
+
+        if(!form) return;
+
+        const data = new FormData(form as HTMLFormElement);
+
+        const email = data.get("email");
+
+        if(!email) return;
+
+        if(email.toString().trim() === "") return
+
+        if(email.toString().trim().length < 12) return setAlert("erro", "Email inválido!");
+        
+        if(!email.toString().includes("@") || !email.toString().includes(".")) return setAlert("erro", "Email inválido!");
+
+        try {
+            setLoader(true);
+            const res = await recoverPassword(email.toString());
+            setOpen(false)
+
+            if(res !== "ok")
+                return setAlert("erro", res);
+
+            return setAlert("sucesso", "Link enviado para seu e-mail!");
+        } finally {
+            setLoader(false);
+        }
     }
 
     return(
@@ -193,7 +230,7 @@ export function RegisterForm(){
                                 <FormItem>
                                 <FormLabel>Email</FormLabel>
                                 <FormControl>
-                                    <Input disabled={form.formState.isSubmitting} type="email" placeholder="meu_email@gmail.com" {...field} />
+                                    <Input disabled={form.formState.isSubmitting} type="email" placeholder="seu-email@gmail.com" {...field} />
                                 </FormControl>
                                 <FormMessage />
                                 </FormItem>
@@ -251,7 +288,34 @@ export function RegisterForm(){
                 
                                 <label htmlFor="rember" className="text-sm">Lembrar de mim</label>
                             </div>
-                            <div className="text-xs hover:underline cursor-pointer text-zinc-400 hover:text-white transition font-semibold">Esqueceu a senha ?</div>
+                            <AlertDialog open={open}>
+                                <AlertDialogTrigger onClick={()=>setOpen(true)} >
+                                    <div className="text-xs hover:underline cursor-pointer text-zinc-400 hover:text-white transition font-semibold">Esqueceu a senha?</div>
+                                </AlertDialogTrigger>
+                                <AlertDialogContent >
+              
+                                    <form id="recoverPass" >
+                                        <AlertDialogHeader>
+                                            <AlertDialogTitle>
+                                                Esqueceu a senha ?
+                                            </AlertDialogTitle>
+                                            <AlertDialogDescription>
+                                                Insira seu e-mail para recuperar a senha.
+                                            </AlertDialogDescription>
+                                            <div className="my-2">
+                                                <Input name="email" placeholder="meu_email@gmail.com" className="text-white" />
+                                            </div>
+                                        </AlertDialogHeader>
+                                        <AlertDialogFooter className="mt-2">
+                                            <AlertDialogCancel className="cursor-pointer" onClick={()=>setOpen(false)} >Cancelar</AlertDialogCancel>
+                                            <AlertDialogAction onClick={submitRecoverPassword} className="cursor-pointer" >Recuperar</AlertDialogAction>
+                                        </AlertDialogFooter>
+                                    </form>
+                    
+                                </AlertDialogContent>
+                                <AlertDialogOverlay className="backdrop-blur-xs" />
+                          
+                            </AlertDialog>
                         </div>
 
                         <div className="flex items-center gap-2">

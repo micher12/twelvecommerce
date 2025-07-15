@@ -1,16 +1,23 @@
-"use client";
+import HomeComponente from "@/components/home";
+import { getFirebase } from "@/lib/use-firebase";
+import { getDownloadURL, listAll, ref } from "firebase/storage";
 
-import { Slider } from "@/components/slider";
+export default async function Home(){ 
 
-export default function Home(){
+    const { storage } = await getFirebase();
+
+    const listRef = ref(storage, 'hero_images/');
+
+    const res = await listAll(listRef)
+    .then((res) => {
+        const references = res.items.map(items => getDownloadURL(items))
+
+        return Promise.all(references);
+    })
 
     return (
-        <div className="min-h-screen py-25! container-xl">
-            <Slider />
-
-            <div className="container">
-                OLA
-            </div>
+        <div className="min-h-screen py-28! container-xl">
+            <HomeComponente heroImages={res} />
         </div>
     )
     

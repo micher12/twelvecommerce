@@ -3,9 +3,10 @@
 import admin from "@/lib/AdminAuth";
 import { connectionAdmin } from "./connectionAdmin";
 import {  getAuth, signInWithEmailAndPassword } from "firebase/auth";
-import { FirebaseApp, FirebaseOptions, getApp, initializeApp } from "firebase/app";
+import { FirebaseApp, getApp, initializeApp } from "firebase/app";
 import { cookies } from "next/headers";
 import CryptoJS from "crypto-js";
+import { getFirebaseConfig } from "@/lib/use-firebase-config";
 
 type formProps = {
     name: string;
@@ -20,15 +21,17 @@ export async function AuthUserRegister({ name, email, password, phone, remember 
 
     try {
 
-        const firebaseConfig = JSON.parse(process.env.FIREBASE_CONFIG as string) as FirebaseOptions;
-
+        const config = await getFirebaseConfig();
+        
         let app: FirebaseApp;
 
         try {
-            app = getApp();
-        } catch {
-            app = initializeApp(firebaseConfig);
+            app = getApp()
+        } catch  {
+            app = initializeApp(config);
         }
+
+        const auth = getAuth(app);
 
         const finalNumber = "+55"+phone.replace(/[()\s-]/g, "");
 
@@ -39,9 +42,6 @@ export async function AuthUserRegister({ name, email, password, phone, remember 
             password: password,
         })
 
-        const auth = getAuth(app);
-
-    
         const encodedPassword = CryptoJS.AES.encrypt(password, process.env.PASSWORD_HASH as string).toString();
 
         const connection = connectionAdmin("INSERT INTO user (name_user, email_user, phone_user, password_user, createdat) VALUES(?,?,?,?,?)", [name, email, phone, encodedPassword, new Date().toISOString()]);

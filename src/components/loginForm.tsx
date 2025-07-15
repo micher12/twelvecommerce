@@ -16,16 +16,18 @@ import { useGetContext } from "@/lib/useContext";
 import { UseContextProps } from "@/interfaces/use-context-interface";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
-import { getFirebaseConfig } from "@/lib/use-firebase-config";
 import { FirebaseApp, getApp, initializeApp } from "firebase/app";
 import { getAuth, GoogleAuthProvider, signInWithPopup } from "firebase/auth";
 import { AuthGoogleLogin } from "@/models/user-google-login";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogOverlay, AlertDialogTitle, AlertDialogTrigger } from "./ui/alert-dialog";
+import { getFirebaseConfig } from "@/lib/use-firebase-config";
+import { recoverPassword } from "@/models/recover-password";
 
 export function LoginForm(){
 
     const { setAlert, setLoader } = useGetContext() as UseContextProps;
     const router = useRouter();
+    const [open, setOpen] = useState(false);
 
     const formSchema = z.object({
         email: z.string().trim().min(10, {
@@ -72,7 +74,7 @@ export function LoginForm(){
 
     async function loginWithGoogle(){
         try {
-            const { firebaseConfig } = await getFirebaseConfig();
+            const firebaseConfig = await getFirebaseConfig();
 
             let app: FirebaseApp;
 
@@ -104,7 +106,9 @@ export function LoginForm(){
         }
     }
 
-    async function submitRecoverPassword(){
+    async function submitRecoverPassword(e: React.MouseEvent<HTMLButtonElement>){
+        e.preventDefault();
+
         const form = document.getElementById("recoverPass");
 
         if(!form) return;
@@ -113,8 +117,26 @@ export function LoginForm(){
 
         const email = data.get("email");
 
-        // to continue
-        console.log(email);
+        if(!email) return;
+
+        if(email.toString().trim() === "") return
+
+        if(email.toString().trim().length < 12) return setAlert("erro", "Email inválido!");
+        
+        if(!email.toString().includes("@") || !email.toString().includes(".")) return setAlert("erro", "Email inválido!");
+
+        try {
+            setLoader(true);
+            const res = await recoverPassword(email.toString());
+            setOpen(false)
+
+            if(res !== "ok")
+                return setAlert("erro", res);
+
+            return setAlert("sucesso", "Link enviado para seu e-mail!");
+        } finally {
+            setLoader(false);
+        }
     }
 
     return(
@@ -138,7 +160,7 @@ export function LoginForm(){
                                 <FormItem>
                                 <FormLabel>E-mail</FormLabel>
                                 <FormControl>
-                                    <Input type="email" placeholder="meu_email@gmail.com" {...field} />
+                                    <Input type="email" placeholder="seu-email@gmail.com" {...field} />
                                 </FormControl>
                                 <FormMessage />
                                 </FormItem>
@@ -182,8 +204,8 @@ export function LoginForm(){
                 
                                 <label htmlFor="rember" className="text-sm">Lembrar de mim</label>
                             </div>
-                            <AlertDialog>
-                                <AlertDialogTrigger >
+                            <AlertDialog open={open}>
+                                <AlertDialogTrigger onClick={()=>setOpen(true)} >
                                     <div className="text-xs hover:underline cursor-pointer text-zinc-400 hover:text-white transition font-semibold">Esqueceu a senha?</div>
                                 </AlertDialogTrigger>
                                 <AlertDialogContent >
@@ -201,8 +223,8 @@ export function LoginForm(){
                                             </div>
                                         </AlertDialogHeader>
                                         <AlertDialogFooter className="mt-2">
-                                            <AlertDialogCancel className="cursor-pointer">Cancelar</AlertDialogCancel>
-                                            <AlertDialogAction onClick={submitRecoverPassword} >Recuperar</AlertDialogAction>
+                                            <AlertDialogCancel className="cursor-pointer" onClick={()=>setOpen(false)} >Cancelar</AlertDialogCancel>
+                                            <AlertDialogAction onClick={submitRecoverPassword} className="cursor-pointer" >Recuperar</AlertDialogAction>
                                         </AlertDialogFooter>
                                     </form>
                     

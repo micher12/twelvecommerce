@@ -18,7 +18,7 @@ export default async function user(req: NextApiRequest, res: NextApiResponse){
         try {
             const decoded = await admin.auth().verifySessionCookie(session);
 
-            const user = await connection<useUserInterface[]>("SELECT * from user WHERE email_user = ?", [decoded.email as string]).then(res => res?.[0]);
+            const user = await connection<useUserInterface[]>("SELECT name_user, email_user, phone_user, createdat from user WHERE email_user = ?", [decoded.email as string]).then(res => res?.[0]);
 
             return res.status(200).json({sucesso: "ok", user})
 

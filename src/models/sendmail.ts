@@ -2,7 +2,7 @@
 
 import nodemailer from "nodemailer"
 
-export async function sendmail(email: string){
+export async function sendmail(email: string, title: string = "Código de verificação ✅", content?: string){
 
     function stripTags(input: string): string {
         return input.replace(/<\/?[^>]+(>|$)/g, "");
@@ -18,7 +18,9 @@ export async function sendmail(email: string){
 
     const verificationCode = Math.floor(100_000 + Math.random() * 900_000).toString();
 
-    const html = `
+    let html: string = "";
+
+    html = `
         <!DOCTYPE html>
         <html lang="pt-br">
         <head>
@@ -27,7 +29,7 @@ export async function sendmail(email: string){
             <style>
                 .container{
                     margin: 0 auto;
-                    max-width: 1140px;
+                    max-width: 600px;
                     width: 100%;
                     border: 1px solid #f2f2f23d;
                     background-color: #222; /* oklch não é suportado por todos os clientes de email */
@@ -56,7 +58,7 @@ export async function sendmail(email: string){
         <body>
             <div class="container">
                 <div class="center">
-                    <img width="250" src="${process.env.NEXT_PUBLIC_DOMAIN}/images/white_logo.png" alt="Twelve Commerce Logo" />
+                    <img width="250" src="https://twelvecommerce.vercel.app/images/white_logo.png" alt="Twelve Commerce Logo" />
                 </div>
                 <h2 class="center">
                     TWELVE COMMERCE 
@@ -72,10 +74,13 @@ export async function sendmail(email: string){
         </html>
     `;
 
+    if(content)
+        html = content
+
     await transporter.sendMail({
-        from: `"TWELVE COMMERCE " <${process.env.EMAIL_TRANSPORTER}>`,
+        from: `"Twelve Commerce " <${process.env.EMAIL_TRANSPORTER}>`,
         to: email,
-        subject: "Código de verificação ✅",
+        subject: title,
         text: stripTags(html), // plain‑text body
         html: html, // HTML body
     });

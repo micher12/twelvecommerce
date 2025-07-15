@@ -39,20 +39,23 @@ export function Perfil(){
 
 
     return (
+        <>
+        <h2 className="text-3xl font-bold mb-2">Perfil</h2>
         <Card>
             <CardHeader>
                 <CardTitle className="flex items-center justify-between">
-                     <h2 className="text-3xl font-bold">Perfil</h2>
-                    <Button onClick={logOut} variant={"destructive"} className="cursor-pointer hover:bg-red-800!" ><LogOut /> Sair  </Button>
-                </CardTitle>
-                <CardDescription>
-                    {data && (
-                        <>
-                        <h2>Olá, {data.name_user}! Seja bem vindo!</h2>
-                        </>
+                     {data && (
+                        <h2 className="">Olá, {data.name_user}! Seja bem vindo!</h2>
                     )}
+                </CardTitle>
+                     
+                <Button onClick={logOut} variant={"destructive"} className="cursor-pointer hover:bg-red-800!" ><LogOut /> Sair  </Button>
+      
+                <CardDescription>
+                    
                 </CardDescription>
             </CardHeader>
         </Card>
+        </>
     )
 }
