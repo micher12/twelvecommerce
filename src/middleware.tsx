@@ -21,9 +21,7 @@ export async function middleware(request: NextRequest) {
     let Authentiqued = false;
     let uid: string | null = null;
 
-    const cookie = await cookies();
-
-    const session = cookie.get("session");
+    const session = request.cookies.get("session");
 
     if(session){          
 
