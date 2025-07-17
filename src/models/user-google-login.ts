@@ -15,13 +15,13 @@ export async function AuthGoogleLogin(token: string){
         const thisUser = await admin.auth().getUser(decoded.uid);
 
         const [users, sessionToken, cookie] = await Promise.all([
-            connectionAdmin<useUserInterface[]>("SELECT * FROM user WHERE email_user = ?",[decoded.email as string]),
+            connectionAdmin<useUserInterface[]>("SELECT * FROM users WHERE email_user = ?",[decoded.email as string]),
             admin.auth().createSessionCookie(token, {expiresIn: time}),
             cookies()
         ])
 
         if(!users.length){
-            await connectionAdmin("INSERT INTO user (name_user, email_user, phone_user, password_user, createdat) VALUES(?,?,?,?,?)", [thisUser.displayName as string,decoded.email as string,"null","google", new Date().toISOString()])
+            await connectionAdmin("INSERT INTO users (name_user, email_user, phone_user, password_user, createdat, uid_user) VALUES(?,?,?,?,?,?)", [thisUser.displayName as string,decoded.email as string,"null","google", new Date().toISOString(), decoded.uid])
         }
 
         cookie.set("session",sessionToken, {

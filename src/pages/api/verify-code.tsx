@@ -32,11 +32,9 @@ export default async function verifyCode(req: NextApiRequest, res: NextApiRespon
         const ultimoAcesso = requestStore[ip];
 
         if(ultimoAcesso && (agora - ultimoAcesso.date > 60 * 1000)){
-            console.log("resetado")
             requestStore[ip] = {count: 1, date: agora};
         }
 
-        // 5 minutos
         if (ultimoAcesso && ultimoAcesso.count > 10) {
             return false; 
         }

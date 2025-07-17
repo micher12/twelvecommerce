@@ -5,6 +5,8 @@
 
 @theme inline {
   --breakpoint-xs: 500px;
+  --breakpoint-2md: 860px;
+  --breakpoint-2lg: 1200px;
   --color-background: var(--background);
   --color-foreground: var(--foreground);
   --font-sans: var(--font-geist-sans);
@@ -196,7 +198,7 @@ body {
 
 
 @media screen and (max-width: 500px){
-    .container{
+    .container, .container-xl{
         width: 95%;
     }
 }

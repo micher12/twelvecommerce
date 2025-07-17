@@ -44,7 +44,7 @@ export async function AuthUserRegister({ name, email, password, phone, remember 
 
         const encodedPassword = CryptoJS.AES.encrypt(password, process.env.PASSWORD_HASH as string).toString();
 
-        const connection = connectionAdmin("INSERT INTO user (name_user, email_user, phone_user, password_user, createdat) VALUES(?,?,?,?,?)", [name, email, phone, encodedPassword, new Date().toISOString()]);
+        const connection = connectionAdmin("INSERT INTO users (name_user, email_user, phone_user, password_user, createdat, uid_user) VALUES(?,?,?,?,?,?)", [name, email, phone, encodedPassword, new Date().toISOString(), user.uid]);
 
         const signIn = signInWithEmailAndPassword(auth, user.email as string, password);
 

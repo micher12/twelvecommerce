@@ -8,7 +8,7 @@ import jwt from "jsonwebtoken";
 
 export async function verifyEmail(email: string){
     
-    const hasAccount = await connection<useUserInterface[]>("SELECT id_user from user WHERE email_user = ?", [email]);
+    const hasAccount = await connection<useUserInterface[]>("SELECT id_user from users WHERE email_user = ?", [email]);
 
     if(hasAccount && hasAccount.length > 0)
         return null;

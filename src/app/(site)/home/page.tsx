@@ -1,4 +1,4 @@
-import HomeComponente from "@/components/home";
+import { HomeComponent } from "@/components/home/home";
 import { getFirebase } from "@/lib/use-firebase";
 import { getDownloadURL, listAll, ref } from "firebase/storage";
 
@@ -17,7 +17,7 @@ export default async function Home(){
 
     return (
         <div className="min-h-screen py-25! sm:py-28! container-xl">
-            <HomeComponente heroImages={res} />
+            <HomeComponent heroImages={res} />
         </div>
     )
     
