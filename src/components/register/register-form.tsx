@@ -1,13 +1,13 @@
 "use client";
 
-import { Checkbox } from "./ui/checkbox";
+import { Checkbox } from "../ui/checkbox";
 import { Eye, EyeClosed, LogIn } from "lucide-react";
 import { FormProvider, useForm } from "react-hook-form";
-import { Button } from "./ui/button";
-import { Card, CardHeader, CardTitle, CardDescription, CardContent } from "./ui/card";
-import { FormField, FormItem, FormLabel, FormControl, FormMessage } from "./ui/form";
-import { GoogleIcon } from "./ui/googleIcon";
-import { Input } from "./ui/input";
+import { Button } from "../ui/button";
+import { Card, CardHeader, CardTitle, CardDescription, CardContent } from "../ui/card";
+import { FormField, FormItem, FormLabel, FormControl, FormMessage } from "../ui/form";
+import { GoogleIcon } from "../ui/googleIcon";
+import { Input } from "../ui/input";
 import z from "zod";
 import { zodResolver } from "@hookform/resolvers/zod";
 import Link from "next/link";
@@ -17,13 +17,13 @@ import { UseContextProps } from "@/interfaces/use-context-interface";
 import { AuthUserRegister } from "@/models/user-register";
 import { useState } from "react";
 import { verifyEmail } from "@/models/verify-email";
-import { InputOTP, InputOTPGroup, InputOTPSlot } from "./ui/input-otp";
+import { InputOTP, InputOTPGroup, InputOTPSlot } from "../ui/input-otp";
 import { getAuth, GoogleAuthProvider, signInWithPopup } from "firebase/auth";
 import { useRouter } from "next/navigation";
 import { AuthGoogleLogin } from "@/models/user-google-login";
 import { FirebaseApp, getApp, initializeApp } from "firebase/app";
 import { getFirebaseConfig } from "@/lib/use-firebase-config";
-import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogOverlay, AlertDialogTitle, AlertDialogTrigger } from "./ui/alert-dialog";
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogOverlay, AlertDialogTitle, AlertDialogTrigger } from "../ui/alert-dialog";
 import { recoverPassword } from "@/models/recover-password";
 
 export function RegisterForm(){

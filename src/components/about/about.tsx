@@ -1,5 +1,5 @@
 import { AccordionSobre } from "./accordion-sobre";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "./ui/card";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "../ui/card";
 
 export function AboutComponnent(){
     return(

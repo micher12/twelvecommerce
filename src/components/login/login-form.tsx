@@ -1,13 +1,13 @@
 "use client";
 
-import { Checkbox } from "./ui/checkbox";
+import { Checkbox } from "../ui/checkbox";
 import { Eye, EyeClosed, LogIn } from "lucide-react";
 import { FormProvider, useForm } from "react-hook-form";
-import { Button } from "./ui/button";
-import { Card, CardHeader, CardTitle, CardDescription, CardContent } from "./ui/card";
-import { FormField, FormItem, FormLabel, FormControl, FormMessage } from "./ui/form";
-import { GoogleIcon } from "./ui/googleIcon";
-import { Input } from "./ui/input";
+import { Button } from "../ui/button";
+import { Card, CardHeader, CardTitle, CardDescription, CardContent } from "../ui/card";
+import { FormField, FormItem, FormLabel, FormControl, FormMessage } from "../ui/form";
+import { GoogleIcon } from "../ui/googleIcon";
+import { Input } from "../ui/input";
 import z from "zod";
 import { zodResolver } from "@hookform/resolvers/zod";
 import Link from "next/link";
@@ -19,7 +19,7 @@ import { useState } from "react";
 import { FirebaseApp, getApp, initializeApp } from "firebase/app";
 import { getAuth, GoogleAuthProvider, signInWithPopup } from "firebase/auth";
 import { AuthGoogleLogin } from "@/models/user-google-login";
-import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogOverlay, AlertDialogTitle, AlertDialogTrigger } from "./ui/alert-dialog";
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogOverlay, AlertDialogTitle, AlertDialogTrigger } from "../ui/alert-dialog";
 import { getFirebaseConfig } from "@/lib/use-firebase-config";
 import { recoverPassword } from "@/models/recover-password";
 

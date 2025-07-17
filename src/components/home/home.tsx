@@ -2,7 +2,7 @@
 
 import { Slider } from "./slider";
 
-export default function HomeComponente({heroImages}:{heroImages: string[]}){
+export function HomeComponent({heroImages}:{heroImages: string[]}){
     return(
         <>
             <Slider images={heroImages} />
