@@ -1,7 +1,5 @@
 "use client";
 
-import { Plus, X } from "lucide-react";
-import { Button } from "../../ui/button";
 import { keepPreviousData, useQuery } from "@tanstack/react-query";
 import { useAddressInterface } from "@/interfaces/use-address-interface";
 import { Card, CardContent, CardDescription, CardHeader } from "../../ui/card";

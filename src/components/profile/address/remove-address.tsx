@@ -5,7 +5,7 @@ import { Button } from "@/components/ui/button";
 import { useDeleteAddress } from "@/models/use-delete-address";
 import { AlertDialogCancel } from "@radix-ui/react-alert-dialog";
 import { X } from "lucide-react";
-import { Dispatch, SetStateAction, useState } from "react";
+import { Dispatch, SetStateAction } from "react";
 
 export function RemoveAddress({addressId, setDeleting}:{addressId: number, setDeleting: Dispatch<SetStateAction<{
     state: boolean;
