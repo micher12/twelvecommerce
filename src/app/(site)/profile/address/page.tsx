@@ -37,7 +37,7 @@ export default async function ProfileAddress(){
 
     const queryClient = getQueryClient();
 
-    await queryClient.prefetchQuery({
+    queryClient.prefetchQuery({
         queryKey: ["user", "user-address"],
         queryFn: addressFetch,
     });
