@@ -58,7 +58,7 @@ export function ProfileProvider({children}:{children: ReactNode}){
                                 {menuItems.map((item)=>(
                                     <SidebarMenuItem key={item.path}>
                                         <SidebarMenuButton asChild isActive={path === item.path} className={`${path === item.path && "bg-blue-600!"}`}>
-                                            <Link href={`${process.env.NEXT_PUBLIC_DOMAIN}${item.path}`} className="flex items-center [&>svg]:size-4 [&>svg]:shrink-0 gap-2" > {item.icon} {item.text}</Link>
+                                            <Link href={item.path} className="flex items-center [&>svg]:size-4 [&>svg]:shrink-0 gap-2" > {item.icon} {item.text}</Link>
                                         </SidebarMenuButton>
                                     </SidebarMenuItem>
                                 ))}
