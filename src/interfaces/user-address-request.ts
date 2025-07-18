@@ -1,7 +1,8 @@
 export type useAddressRequest = {
+    erro?: boolean
     cep: string
-    city: string
-    neighborhood: string
-    state: string
-    street: string
+    logradouro: string
+    bairro: string
+    localidade: string
+    estado: string
 }

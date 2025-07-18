@@ -7,9 +7,13 @@ import { useAddressInterface } from "@/interfaces/use-address-interface";
 import { Card, CardContent, CardDescription, CardHeader } from "../../ui/card";
 import { EditAddress } from "./edit-address";
 import { SkeletonComponent } from "@/components/ui/skeleton-componet";
+import { RemoveAddress } from "./remove-address";
+import { CreateNewAddress } from "./create-new-address";
+import { useState } from "react";
 
 export function ProfileAddressComponent(){
 
+    const [deleteing, setDeleting] = useState<{state: boolean, id: null | number}>({state: false, id: null});
 
     const addressFetch = async ()=>{
         const res: {sucesso?: "ok", address?: useAddressInterface[], erro?: string} = await fetch("/api/profile/address").then(res => res.json());
@@ -30,21 +34,20 @@ export function ProfileAddressComponent(){
  
     return(
         <div className="flex flex-col">
-            <Button className="w-fit cursor-pointer flex items-center gap-2" variant={"outline"} ><Plus/> Cadastrar novo endereço</Button>
-
+            
+            <CreateNewAddress />
             <h2 className="text-lg font-semibold my-4">Endereços cadastrados: </h2>
             {!loadingEnderecos ?
             <div className="flex w-full gap-8 flex-wrap">
                 {enderecos?.map((endereco,index)=>(
-                    <Card key={endereco.id_address} className="bg-zinc-700/50 shadow-lg rounded-lg! w-full sm:w-[calc((100%/2)-16px)] 2lg:w-[calc((100%/3)-16px)] gap-1" >
+                    <Card key={endereco.id_address} className={`bg-zinc-700/50 shadow-lg rounded-lg! w-full 2md:w-[calc((100%/2)-16px)]! 2lg:w-[calc((100%/3)-21.4px)]! gap-1 
+                    ${(deleteing.state && deleteing.id === endereco.id_address) && "animate-pulse bg-zinc-500/50"}`} >
                         <CardHeader>
                             <CardDescription className="flex justify-between items-center ">
                                 {`${index+1}° Endereço`} 
                                 <div className="flex items-center gap-2">
                                     <EditAddress address={endereco} />
-                                    <div className="cursor-pointer bg-zinc-500/50 hover:bg-zinc-400/50 transition p-1 rounded-sm">
-                                        <X className="w-4 h-4 text-red-500" />
-                                    </div>
+                                    <RemoveAddress addressId={endereco.id_address} setDeleting={setDeleting} />
                                 </div>
                             </CardDescription>
                         </CardHeader>
@@ -82,7 +85,7 @@ export function ProfileAddressComponent(){
                 ))}
             </div>
             :
-            <SkeletonComponent />
+            <SkeletonComponent type={"address_loader"} />
             }
         </div>
     )

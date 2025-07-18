@@ -16,7 +16,7 @@ import { useForm } from "react-hook-form";
 import { z } from "zod";
 
 export function EditAddress({address}:{address: useAddressInterface}){
-
+    
     const { mutateAsync: updateAddress } = useUpdateAddress();
     const { setAlert, setLoader } = useGetContext() as UseContextProps;
     const [open, setOpen] = useState(false);
@@ -47,10 +47,16 @@ export function EditAddress({address}:{address: useAddressInterface}){
     })
 
     async function handleSubmitForm(data: formProps) {
+        const condition = data.cep_address === address.cep_address 
+        && data.number_address === address.number_address
+        && data.complet_address === address.complet_address;
+
+        if(condition) return setAlert("warning", "Nenhum dado foi alterado!"); 
+
         try{
             setLoader(true);
 
-            const res = await updateAddress({id_address: address.id_address, ...data});
+            const res = await updateAddress({...data, id_address: address.id_address});
             
             if(res.erro)
                 setAlert("erro", res.erro);
@@ -66,14 +72,21 @@ export function EditAddress({address}:{address: useAddressInterface}){
     async function getCepAddres(value: string | undefined){
         if(!value || value.includes("_")) return;
 
-        const res: useAddressRequest = await fetch(`https://brasilapi.com.br/api/cep/v1/${value}`).then(res => res.json())
+        try {
+            const api = await fetch(`https://viacep.com.br/ws/${value}/json/ `)
 
-        if(!res) return;
+            const res: useAddressRequest = await api.json();
 
-        form.setValue("city_address", res.city);
-        form.setValue("district_address", res.neighborhood);
-        form.setValue("street_address", res.street);
-        form.setValue("country_address", res.state);
+            if(res.erro) throw new Error("CEP não encontrado!")
+
+            form.setValue("city_address", res.localidade);
+            form.setValue("district_address", res.bairro);
+            form.setValue("street_address", res.logradouro);
+            form.setValue("country_address", res.estado);
+        } catch (error) {
+            const erro = error as Error;
+            return setAlert("erro", erro.message);
+        }
        
     }
 
@@ -95,11 +108,12 @@ export function EditAddress({address}:{address: useAddressInterface}){
                 </DialogHeader>
                 <Form {...form}>
                     <form onSubmit={form.handleSubmit(handleSubmitForm)} className="flex flex-col gap-4">
+                    
                         <FormField 
                         control={form.control}
                         name="cep_address"
                         render={( {field} )=>(
-                            <FormItem>
+                            <FormItem className="flex-1">
                                 <FormLabel>CEP</FormLabel>
                                 <FormControl>
                                     <InputMask mask="99999-999" {...field} autoClear={false}
@@ -118,23 +132,9 @@ export function EditAddress({address}:{address: useAddressInterface}){
 
                         <FormField 
                         control={form.control}
-                        name="district_address"
-                        render={( {field} )=>(
-                            <FormItem>
-                                <FormLabel>Bairro</FormLabel>
-                                <FormControl>
-                                    <Input placeholder="Bairro das..." {...field} />
-                                </FormControl>
-                                <FormMessage />
-                            </FormItem>
-                        )}
-                        />
-
-                        <FormField 
-                        control={form.control}
                         name="street_address"
                         render={( {field} )=>(
-                            <FormItem>
+                            <FormItem className="flex-1"> 
                                 <FormLabel>Rua</FormLabel>
                                 <FormControl>
                                     <Input placeholder="Rua dos..." {...field} />
@@ -144,56 +144,75 @@ export function EditAddress({address}:{address: useAddressInterface}){
                         )}
                         />
 
-                        <FormField 
-                        control={form.control}
-                        name="number_address"
-                        render={( {field } )=>(
-                            <FormItem>
-                                <FormLabel>Número</FormLabel>
-                                <FormControl>
-                                    <Input placeholder="0" {...field} onChange={(e)=> {
-                                        if(Number(e.target.value) || e.target.value === "0" || e.target.value.trim() === "")
-                                            field.onChange(Number(e.target.value))
-                                    }} />
-                                </FormControl>
-                                <FormMessage />
-                            </FormItem>
-                        )}
-                        />
+                        <div className="flex justify-between gap-4">
+                            <FormField 
+                            control={form.control}
+                            name="district_address"
+                            render={( {field} )=>(
+                                <FormItem className="flex-2">
+                                    <FormLabel>Bairro</FormLabel>
+                                    <FormControl>
+                                        <Input placeholder="Bairro das..." {...field} />
+                                    </FormControl>
+                                    <FormMessage />
+                                </FormItem>
+                            )}
+                            />
 
-                        <FormField 
-                        control={form.control}
-                        name="city_address"
-                        render={( {field } )=>(
-                            <FormItem>
-                                <FormLabel>Cidade</FormLabel>
-                                <FormControl>
-                                    <Input placeholder="Goiânia" {...field} />
-                                </FormControl>
-                                <FormMessage />
-                            </FormItem>
-                        )}
-                        />
+                            <FormField 
+                            control={form.control}
+                            name="number_address"
+                            render={( {field } )=>(
+                                <FormItem className="flex-1">
+                                    <FormLabel>Número</FormLabel>
+                                    <FormControl>
+                                        <Input placeholder="0" {...field} onChange={(e)=> {
+                                            if(Number(e.target.value) || e.target.value === "0" || e.target.value.trim() === "")
+                                                field.onChange(Number(e.target.value))
+                                        }} />
+                                    </FormControl>
+                                    <FormMessage />
+                                </FormItem>
+                            )}
+                            />
+                        </div>
+            
 
-                        <FormField 
-                        control={form.control}
-                        name="country_address"
-                        render={( {field } )=>(
-                            <FormItem>
-                                <FormLabel>Estado</FormLabel>
-                                <FormControl>
-                                    <Input placeholder="Goiás" {...field} />
-                                </FormControl>
-                                <FormMessage />
-                            </FormItem>
-                        )}
-                        />
+                       <div className="flex justify-between gap-4">
+                            <FormField 
+                            control={form.control}
+                            name="city_address"
+                            render={( {field } )=>(
+                                <FormItem className="flex-2">
+                                    <FormLabel>Cidade</FormLabel>
+                                    <FormControl>
+                                        <Input placeholder="Goiânia" {...field} />
+                                    </FormControl>
+                                    <FormMessage />
+                                </FormItem>
+                            )}
+                            />
+
+                            <FormField 
+                            control={form.control}
+                            name="country_address"
+                            render={( {field } )=>(
+                                <FormItem className="flex-1">
+                                    <FormLabel>Estado</FormLabel>
+                                    <FormControl>
+                                        <Input placeholder="Goiás" {...field} />
+                                    </FormControl>
+                                    <FormMessage />
+                                </FormItem>
+                            )}
+                            />
+                       </div>
 
                         <FormField 
                         control={form.control}
                         name="complet_address"
                         render={( {field } )=>(
-                            <FormItem>
+                            <FormItem >
                                 <FormLabel>Complemento</FormLabel>
                                 <FormControl>
                                     <Textarea {...field} />
@@ -203,7 +222,7 @@ export function EditAddress({address}:{address: useAddressInterface}){
                         )}
                         />
 
-                        <DialogFooter className="flex items-center gap-4 mt-2">
+                        <DialogFooter className=" mt-2">
                             <DialogClose asChild>
                                 <Button variant={"outline"} className="cursor-pointer" >Cancelar</Button>
                             </DialogClose>
