@@ -6,7 +6,7 @@ import { AuthUserLogOut } from "@/models/user-logout";
 import { UseContextProps } from "@/interfaces/use-context-interface";
 import { useGetContext } from "@/lib/useContext";
 import { usePathname, useRouter } from "next/navigation";
-import { keepPreviousData, useQuery } from "@tanstack/react-query";
+import { keepPreviousData, useQuery, useQueryClient } from "@tanstack/react-query";
 import { Sidebar, SidebarContent, SidebarFooter, SidebarGroup, SidebarGroupContent, SidebarGroupLabel, SidebarMenu, SidebarMenuButton, SidebarMenuItem, SidebarProvider, SidebarTrigger, } from "../ui/sidebar";
 import Link from "next/link";
 import { ReactNode } from "react";
@@ -22,6 +22,7 @@ export function ProfileProvider({children}:{children: ReactNode}){
     const { setAlert } = useGetContext() as UseContextProps;
     const router = useRouter();
     const path = usePathname();
+    const queryClient = useQueryClient();
 
     const fetchUser = async () => {
         const res = await getProfile();
@@ -43,7 +44,8 @@ export function ProfileProvider({children}:{children: ReactNode}){
         const res = await AuthUserLogOut();
         if(res === "ok"){
             setAlert("sucesso", "Sessão finalizada!");
-            router.push("/home");
+            queryClient.clear();
+            router.refresh();
         }
     }
 
@@ -87,9 +89,12 @@ export function ProfileProvider({children}:{children: ReactNode}){
                         <SidebarTrigger />
                         <h2 className="text-3xl font-bold">{menuItems.find(item=> item.path === path)?.title}</h2>
                     </CardTitle>
-                    <CardDescription>
-                        {user && path === "/profile" ? `Olá, seja bem vindo ${user?.name_user}!` 
+                    <CardDescription className="flex items-center">
+     
+                        {path === "/profile" 
+                        ? <>{user ? "Olá, seja bem vindo "+user.name_user+"!" : ""}</>
                         : menuItems.find(item => item.path === path)?.description}
+      
                     </CardDescription>
                 </CardHeader>
                 <CardContent className="relative">

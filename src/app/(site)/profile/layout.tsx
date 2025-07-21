@@ -21,7 +21,7 @@ export default async function LayoutProfile({children}:{children: ReactNode}){
 
     const queryClient = getQueryClient();
 
-    await queryClient.prefetchQuery({
+    queryClient.prefetchQuery({
         queryKey: ["user"],
         queryFn: preFetchUser,
     })
@@ -32,7 +32,7 @@ export default async function LayoutProfile({children}:{children: ReactNode}){
             <HydrationBoundary state={dehydrate(queryClient)}>
                 <ProfileProvider>
                     {children}
-                </ProfileProvider>
+                </ProfileProvider> 
             </HydrationBoundary>
         
         </div>
