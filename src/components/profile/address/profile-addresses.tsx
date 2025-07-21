@@ -1,20 +1,20 @@
 "use client";
 
 import { keepPreviousData, useQuery } from "@tanstack/react-query";
-import { useAddressInterface } from "@/interfaces/use-address-interface";
 import { Card, CardContent, CardDescription, CardHeader } from "../../ui/card";
 import { EditAddress } from "./edit-address";
 import { SkeletonComponent } from "@/components/ui/skeleton-componet";
 import { RemoveAddress } from "./remove-address";
 import { CreateNewAddress } from "./create-new-address";
 import { useState } from "react";
+import { getProfileAddress } from "@/api/get-profile-address";
 
 export function ProfileAddressComponent(){
 
     const [deleteing, setDeleting] = useState<{state: boolean, id: null | number}>({state: false, id: null});
 
     const addressFetch = async ()=>{
-        const res: {sucesso?: "ok", address?: useAddressInterface[], erro?: string} = await fetch("/api/profile/address").then(res => res.json());
+        const res = await getProfileAddress();
         
         if(res.sucesso)
             return res.address

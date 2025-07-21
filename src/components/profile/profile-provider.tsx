@@ -7,10 +7,10 @@ import { UseContextProps } from "@/interfaces/use-context-interface";
 import { useGetContext } from "@/lib/useContext";
 import { usePathname, useRouter } from "next/navigation";
 import { keepPreviousData, useQuery } from "@tanstack/react-query";
-import { useUserInterface } from "@/interfaces/use-user-interface";
 import { Sidebar, SidebarContent, SidebarFooter, SidebarGroup, SidebarGroupContent, SidebarGroupLabel, SidebarMenu, SidebarMenuButton, SidebarMenuItem, SidebarProvider, SidebarTrigger, } from "../ui/sidebar";
 import Link from "next/link";
 import { ReactNode } from "react";
+import { getProfile } from "@/api/get-profile";
 
 const menuItems = [
     {path: "/profile", text: "Home", icon: <User />, title: "Perfil"},
@@ -23,16 +23,18 @@ export function ProfileProvider({children}:{children: ReactNode}){
     const router = useRouter();
     const path = usePathname();
 
+    const fetchUser = async () => {
+        const res = await getProfile();
+
+        if(res.sucesso)
+            return res.user;
+
+        return null;
+    }
+
     const { data: user } = useQuery({
         queryKey: ["user"],
-        queryFn: async ()=>{
-            const res: {sucesso?: "ok", user?: useUserInterface, erro?: "Inváldio"} = await fetch("/api/profile").then(res => res.json());
-
-            if(res.sucesso)
-                return res.user
-
-            return null;
-        },
+        queryFn: fetchUser,
         placeholderData: keepPreviousData,
     })
 
@@ -71,7 +73,7 @@ export function ProfileProvider({children}:{children: ReactNode}){
                 <SidebarFooter>
                     <SidebarMenu>
                         <SidebarMenuItem>
-                            <SidebarMenuButton onClick={logOut} variant={"outline"} className="cursor-pointer hover:bg-zinc-800">
+                            <SidebarMenuButton onClick={logOut} variant={"outline"} className="cursor-pointer bg-red-500/50 hover:bg-red-600/50">
                                 <LogOut /> Sair
                             </SidebarMenuButton>
                         </SidebarMenuItem>

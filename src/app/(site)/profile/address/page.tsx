@@ -1,38 +1,20 @@
 "use server";
 
+import { getProfileAddress } from "@/api/get-profile-address";
 import { ProfileAddressComponent } from "@/components/profile/address/profile-addresses";
-import { useAddressInterface } from "@/interfaces/use-address-interface";
 import { getQueryClient } from "@/lib/getQueryClient";
 import { dehydrate, HydrationBoundary } from "@tanstack/react-query";
-import { cookies } from "next/headers";
-
-type requestAddressFetch = {
-    sucesso?: "ok";
-    address?: useAddressInterface[];
-    erro?: string;
-}
 
 export default async function ProfileAddress(){
 
     const addressFetch = async ()=>{
 
-        const cookie = await cookies();
+        const res = await getProfileAddress();
 
-        const session = cookie.get("session");
+        if(res.sucesso)
+            return res.address
 
-        if(!session) return null;
-
-        const res: requestAddressFetch = await fetch(`${process.env.NEXT_PUBLIC_DOMAIN}/api/profile/address`,{
-            headers:{
-                cookie: `${session.name}=${session.value}`
-            }
-        })
-        .then(res => res.json());
-
-        if(res.erro)
-            return null
-
-        return res.address;
+        return null;
     }
 
     const queryClient = getQueryClient();
