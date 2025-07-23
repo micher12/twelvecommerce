@@ -266,7 +266,7 @@ function SidebarTrigger({
             data-slot="sidebar-trigger"
             variant="ghost"
             size="icon"
-            className={cn("size-7 [&>svg]:w-6! [&>svg]:h-6! bg-zinc-500/50 hover:bg-zinc-400/50! rounded-md p-4.5 cursor-pointer ", className)}
+            className={cn("size-7 [&>svg]:w-5! [&>svg]:h-5! bg-zinc-600/50 hover:bg-zinc-500/50! p-4 rounded-lg cursor-pointer ", className)}
             onClick={(event) => {
                 onClick?.(event)
                 toggleSidebar()

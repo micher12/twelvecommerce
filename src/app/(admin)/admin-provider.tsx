@@ -1,6 +1,6 @@
 "use client";
 
-import { Sidebar, SidebarContent, SidebarFooter, SidebarGroup, SidebarGroupContent, SidebarHeader, SidebarMenu, SidebarMenuButton, SidebarMenuItem, SidebarMenuSub, SidebarMenuSubItem, SidebarProvider } from "@/components/ui/sidebar";
+import { Sidebar, SidebarContent, SidebarFooter, SidebarGroup, SidebarGroupContent, SidebarHeader, SidebarMenu, SidebarMenuButton, SidebarMenuItem, SidebarMenuSub, SidebarMenuSubItem, SidebarProvider, SidebarTrigger } from "@/components/ui/sidebar";
 import Link from "next/link";
 import { ReactNode } from "react";
 import Image from "next/image";
@@ -134,7 +134,8 @@ export function AdminProvider({children}:{children: ReactNode}){
             <main className="container-xl py-3!">
                 <Card className="w-full">
                     <CardHeader>
-                        <CardTitle>
+                        <CardTitle className="flex items-center gap-5">
+                            <SidebarTrigger /> 
                             <AdminNavegation />
                         </CardTitle>
                     </CardHeader>
