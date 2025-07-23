@@ -1,5 +1,3 @@
-"use server";
-
 import { getProfile } from "@/api/get-profile";
 import { ProfileProvider } from "@/components/profile/profile-provider";
 import { getQueryClient } from "@/lib/getQueryClient";
@@ -7,7 +5,7 @@ import { dehydrate, HydrationBoundary } from "@tanstack/react-query";
 import { ReactNode } from "react";
 
 
-export default async function LayoutProfile({children}:{children: ReactNode}){
+export default function LayoutProfile({children}:{children: ReactNode}){
 
     const preFetchUser = async ()=>{
 

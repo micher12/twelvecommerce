@@ -1,3 +1,8 @@
+import { AdminComponent } from "@/components/(admin)/admin";
+
 export default function Admin(){
-    return <h2>ADMIN</h2>
+
+    return (
+        <AdminComponent />
+    )
 }

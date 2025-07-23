@@ -7,9 +7,9 @@ import { UseContextProps } from "@/interfaces/use-context-interface";
 import { useGetContext } from "@/lib/useContext";
 import { usePathname, useRouter } from "next/navigation";
 import { keepPreviousData, useQuery, useQueryClient } from "@tanstack/react-query";
-import { Sidebar, SidebarContent, SidebarFooter, SidebarGroup, SidebarGroupContent, SidebarGroupLabel, SidebarMenu, SidebarMenuButton, SidebarMenuItem, SidebarProvider, SidebarTrigger, } from "../ui/sidebar";
+import { Sidebar, SidebarContent, SidebarFooter, SidebarGroup, SidebarGroupContent, SidebarGroupLabel, SidebarMenu, SidebarMenuButton, SidebarMenuItem, SidebarProvider, SidebarTrigger } from "../ui/sidebar";
 import Link from "next/link";
-import { ReactNode } from "react";
+import { ReactNode, useMemo } from "react";
 import { getProfile } from "@/api/get-profile";
 
 const menuItems = [
@@ -23,6 +23,7 @@ export function ProfileProvider({children}:{children: ReactNode}){
     const router = useRouter();
     const path = usePathname();
     const queryClient = useQueryClient();
+    const currentItem = useMemo(()=> menuItems.find(item => item.path === path), [path]);
 
     const fetchUser = async () => {
         const res = await getProfile();
@@ -54,7 +55,7 @@ export function ProfileProvider({children}:{children: ReactNode}){
         <>
         <SidebarProvider className="min-h-[78vh]">
             <Sidebar className="absolute py-25 h-auto z-1" collapsible="icon" variant="floating">
-                <SidebarContent className="overflow-x-hidden!">
+                <SidebarContent>
                     <SidebarGroup>
                         <SidebarGroupLabel>Perfil</SidebarGroupLabel>
                         <SidebarGroupContent>
@@ -62,7 +63,14 @@ export function ProfileProvider({children}:{children: ReactNode}){
                                 {menuItems.map((item)=>(
                                     <SidebarMenuItem key={item.path}>
                                         <SidebarMenuButton asChild isActive={path === item.path} className={`${path === item.path && "bg-blue-600!"}`}>
-                                            <Link href={item.path} className="flex items-center [&>svg]:size-4 [&>svg]:shrink-0 gap-2" > {item.icon} {item.text}</Link>
+                                            <Link 
+                                            onClick={()=>{
+                                                if(window.innerWidth <= 768){
+                                                    const trigger = document.querySelector("[data-sidebar-trigger]");
+                                                    if(trigger instanceof HTMLElement) trigger.click();
+                                                }
+                                            }}
+                                            href={item.path} className="flex items-center [&>svg]:size-4 [&>svg]:shrink-0 gap-2" > {item.icon} {item.text}</Link>
                                         </SidebarMenuButton>
                                     </SidebarMenuItem>
                                 ))}
@@ -86,8 +94,8 @@ export function ProfileProvider({children}:{children: ReactNode}){
             <Card className="w-full">
                 <CardHeader>
                     <CardTitle className="flex items-center gap-3">
-                        <SidebarTrigger />
-                        <h2 className="text-3xl font-bold">{menuItems.find(item=> item.path === path)?.title}</h2>
+                        <SidebarTrigger data-sidebar-trigger />
+                        <h2 className="text-3xl font-bold">{currentItem?.title}</h2>
                     </CardTitle>
                     <CardDescription className="flex items-center">
      

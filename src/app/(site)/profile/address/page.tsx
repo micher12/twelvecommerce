@@ -1,11 +1,9 @@
-"use server";
-
 import { getProfileAddress } from "@/api/get-profile-address";
 import { ProfileAddressComponent } from "@/components/profile/address/profile-addresses";
 import { getQueryClient } from "@/lib/getQueryClient";
 import { dehydrate, HydrationBoundary } from "@tanstack/react-query";
 
-export default async function ProfileAddress(){
+export default function ProfileAddress(){
 
     const addressFetch = async ()=>{
 
