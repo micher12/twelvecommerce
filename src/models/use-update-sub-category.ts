@@ -21,7 +21,7 @@ export function useUpdateSubCategory(){
 
                 return prev.map((subcategory)=>{
                     if(subcategory.id_subcategory === context.id_subcategory)
-                        return {...subcategory, name_subcategory: context.name_subcategory, id_subcategory: context.id_category}
+                        return {...subcategory, name_subcategory: context.name_subcategory, id_category: context.id_category}
 
                     return subcategory;
                 })
