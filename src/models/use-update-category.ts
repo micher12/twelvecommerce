@@ -17,7 +17,7 @@ export function useUpdateCategory(){
             if(data.erro) return;
 
             queryClient.setQueryData<useCategoryInterface[]>(["category"], prev=>{
-                if(!prev) return prev;
+                if(!prev) return [context];
 
                 return prev.map((category)=>{
                     if(category.id_category === context.id_category)

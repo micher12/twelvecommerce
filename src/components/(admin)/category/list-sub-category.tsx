@@ -1,35 +1,61 @@
 "use client";
 
 import { getCategorys } from "@/api/get-categorys";
-import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
+import { getSubCategorys } from "@/api/get-sub-categorys";
+import { AlertDialog, AlertDialogHeader, AlertDialogCancel, AlertDialogTitle, AlertDialogTrigger, AlertDialogAction, AlertDialogContent, AlertDialogDescription, AlertDialogFooter } from "@/components/ui/alert-dialog";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
 import { DataTable } from "@/components/ui/DataTable";
-import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuTrigger,  } from "@/components/ui/dropdown-menu";
 import { SkeletonComponent } from "@/components/ui/skeleton-componet";
 import { UseAuthContextProps } from "@/interfaces/use-auth-context-interface";
 import { useCategoryInterface } from "@/interfaces/use-category-interface";
+import { useSubCategoryInterface } from "@/interfaces/use-sub-category-interface";
 import { useGetAuthContext } from "@/lib/useAuthContext";
-import { useDeleteCategory } from "@/models/use-delete-category";
-import { useQuery } from "@tanstack/react-query"
+import { useDeleteSubCategory } from "@/models/use-delete-sub-category";
+import { useQuery } from "@tanstack/react-query";
 import { ColumnDef, Row } from "@tanstack/react-table";
-import { ArrowUpDown, MoreHorizontal } from "lucide-react";
+import { ArrowUpDown, MoreHorizontal, Plus } from "lucide-react";
 import Link from "next/link";
 
+interface subCategoryTable {
+    subcategory: useSubCategoryInterface | undefined,
+    category: useCategoryInterface | undefined
+}
 
+export function ListSubCategory(){
 
-export function ListCategory(){
+    const fetchSubCategory = async ()=>{
+        const res = await getSubCategorys();
 
-    const { mutateAsync: deleteCategory } = useDeleteCategory();
+        if(res.sucesso)
+            return res.res
+
+        return null;
+    }
+
+    const { mutateAsync: deleteSubCategory } = useDeleteSubCategory();
     const { setAlert } = useGetAuthContext() as UseAuthContextProps;
 
-    const { data } = useQuery({
+    const { data: categorys } = useQuery({
         queryKey: ["category"],
-        queryFn: getCategorys,
+        queryFn: getCategorys
     })
 
-    async function handleDeleteCategory(rows: Row<useCategoryInterface>[] | number){
+    const { data: subCategorys } = useQuery({
+        queryKey: ["sub_category"],
+        queryFn: fetchSubCategory
+    })
 
+    const realData: subCategoryTable[] = (subCategorys ?? []).map((sub)=>{
+        const category  = categorys?.find(val => val.id_category === sub.id_category);
+        return {
+            subcategory: sub,
+            category: category
+        }
+    })
+
+    async function handleDeleteSubCategory(rows: number | Row<subCategoryTable>[]){
         const idsToDelete: number[] = [];
 
         if(typeof rows === "number"){
@@ -38,12 +64,12 @@ export function ListCategory(){
 
         if (Array.isArray(rows)) {
             for (const row of rows) {
-                idsToDelete.push(row.original.id_category);
+                idsToDelete.push(Number(row.original.subcategory?.id_subcategory));
             }
         }
 
         const result = await Promise.allSettled(
-            idsToDelete.map(id=> deleteCategory(id))
+            idsToDelete.map(id=> deleteSubCategory(id))
         )
 
         const erros = result
@@ -54,9 +80,10 @@ export function ListCategory(){
         }
 
         setAlert("sucesso", "Categoria excluída com sucesso!");
+
     }
 
-    const columns: ColumnDef<useCategoryInterface>[] = [
+    const columns: ColumnDef<subCategoryTable>[] = [
         {
             id: "select",
             header: ({table})=>(
@@ -80,36 +107,28 @@ export function ListCategory(){
             enableHiding: false,
         },
         {
-            accessorKey: "id_category",
-            header: ({ column })=>{
-                return(
-                    <Button 
-                    variant={"ghost"}
-                    onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
-                    >
-                        ID
-                        <ArrowUpDown />
-                    </Button>
-                )
-            },
+            accessorKey: "subcategory.name_subcategory",
+            header: ({column})=>(
+                <Button
+                variant={"ghost"}
+                name="Sub Categoria"
+                onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
+                >
+                    Sub Categoria
+                    <ArrowUpDown />
+                </Button>
+            )
         },
         {
-            accessorKey: "name_category",
-            header: ({ column })=>{
-                return(
-                    <Button 
-                    variant={"ghost"}
-                    onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
-                    >
-                        Categoria
-                        <ArrowUpDown />
-                    </Button>
-                )
-            },
+            accessorKey: "category.name_category",
+            header: "Categoria",
+            cell: ({row})=>(
+                <div className="bg-slate-50 text-zinc-900 rounded-md w-fit p-0.5 px-2">{row.original.category?.name_category}</div>
+            )
         },
         {
-            id: "actions",
-            header: ()=> (<div className="text-right">Ação</div>),
+            id: "action",
+            header: ()=> <div className="text-end">Ação</div>,
             cell: ({table, row})=>{
                 
                 return(
@@ -124,7 +143,7 @@ export function ListCategory(){
                             <DropdownMenuContent align="end">
                                 <DropdownMenuLabel className="text-zinc-500">Ação</DropdownMenuLabel>
                                 <DropdownMenuItem asChild>
-                                    <Link href={`/admin/category/edit_category?id=${row.original.id_category}`}>Editar</Link>
+                                    <Link href={`/admin/category/sub_category/edit_subcategory?id=${row.original.subcategory?.id_subcategory}`}>Editar</Link>
                                 </DropdownMenuItem>
                                 <DropdownMenuSeparator />
                                 <AlertDialog>
@@ -152,9 +171,9 @@ export function ListCategory(){
                                                 <DropdownMenuItem asChild>
                                                     <Button onClick={()=>{
                                                         if(table.getIsSomeRowsSelected() || table.getIsAllRowsSelected())
-                                                            handleDeleteCategory(table.getSelectedRowModel().rows)
+                                                            handleDeleteSubCategory(table.getSelectedRowModel().rows)
                                                         else
-                                                            handleDeleteCategory(row.original.id_category)
+                                                            handleDeleteSubCategory(Number(row.original.subcategory?.id_subcategory))
                                                     }} className="bg-red-500/50 hover:bg-red-600/50! focus:bg-red-500/50 text-white cursor-pointer" >Excluir</Button>
                                                 </DropdownMenuItem>
                                             </AlertDialogAction>
@@ -169,14 +188,19 @@ export function ListCategory(){
         }
     ]
 
-
     return(
-        <div className="pt-5">
-            <h2 className="text-3xl font-bold">Categorias cadastradas: </h2>
-            {data 
-            ? <DataTable columns={columns} data={data} className="mt-5" />
+        <div>
+            <Button asChild>
+                <Link href={"/admin/category/sub_category/new_subcategory"}><Plus /> Cadastrar Sub Categoria</Link>
+            </Button>
+            <h2 className="text-3xl font-bold mt-5">Sub Categorias: </h2>
+
+            {categorys && subCategorys ? (
+                <DataTable columns={columns} data={realData} className="mt-5" />
+            )
             : <SkeletonComponent type={"data_table"} />
             }
+          
         </div>
     )
 }
