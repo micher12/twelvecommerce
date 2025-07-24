@@ -65,7 +65,7 @@ export function ProfileProvider({children}:{children: ReactNode}){
                                         <SidebarMenuButton asChild isActive={path === item.path} className={`${path === item.path && "bg-blue-600!"}`}>
                                             <Link 
                                             onClick={()=>{
-                                                if(window.innerWidth <= 768){
+                                                if(window.innerWidth <= 860){
                                                     const trigger = document.querySelector("[data-sidebar-trigger]");
                                                     if(trigger instanceof HTMLElement) trigger.click();
                                                 }

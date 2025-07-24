@@ -1,6 +1,6 @@
 "use client";
 
-export function SkeletonComponent({type}: {type: "address_loader" | "data_table" | null}){
+export function SkeletonComponent({type}: {type: "address_loader" | "data_table" | "sub_category" | null}){
 
     if(!type) return null;
 
@@ -48,5 +48,22 @@ export function SkeletonComponent({type}: {type: "address_loader" | "data_table"
                 </div>
             </div>
         )
-  
+    
+    if(type === "sub_category")
+        return(
+            <div className="w-full flex flex-col gap-5 mt-5">
+                <div className="flex flex-col gap-2">
+                    <div className="w-52 h-4 bg-zinc-500/50 rounded-lg animate-pulse" />
+                    <div className="w-36 h-7 bg-zinc-500/50 rounded-lg animate-pulse" />
+                </div>
+
+                <div className="flex flex-col gap-2">
+                    <div className="w-52 h-4 bg-zinc-500/50 rounded-lg animate-pulse" />
+                    <div className="w-full h-7 bg-zinc-500/50 rounded-lg animate-pulse" />
+                </div>
+
+                <div className="h-7 w-32 bg-zinc-500/50 animate-pulse rounded-lg" />
+            </div>
+        )
+
 }

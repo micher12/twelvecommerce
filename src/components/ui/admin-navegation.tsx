@@ -16,7 +16,8 @@ const routers = new Map<string, {path: string; label: string; icon: JSX.Element 
     ["new_category", { path: "/admin/category/new_category", label: "Nova categoria", icon: <FolderPlus /> }],
     ["edit_category", { path: "/admin/category/edit_category", label: "Editar categoria", icon: <Settings2 /> }],
     ["sub_category", { path: "/admin/category/sub_category", label: "Sub Categorias", icon: <ListTree /> }],
-    ["new_subcategory", { path: "/admin/category/new_subcategory", label: "Nova Sub Categoria", icon: <FolderPlus /> }],
+    ["new_subcategory", { path: "/admin/category/sub_category/new_subcategory", label: "Nova Sub Categoria", icon: <FolderPlus /> }],
+    ["edit_subcategory", { path: "/admin/category/sub_category/edit_subcategory", label: "Editar Sub Categoria", icon: <Settings2 /> }],
 
 ]);
 

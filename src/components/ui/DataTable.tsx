@@ -4,7 +4,6 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { ColumnDef, ColumnFiltersState, flexRender, getCoreRowModel, getFilteredRowModel, getPaginationRowModel, getSortedRowModel, SortingState, useReactTable } from "@tanstack/react-table";
 import React from "react";
 import { DataTablePagination } from "./DataTablePagination";
-import { Input } from "./input";
 import { DataTableColumnFilter } from "./DataTableColumnFilter";
 import { DataTableViewOptions } from "./DataTableViewOptions";
 
@@ -44,9 +43,7 @@ export function DataTable<TData, TValue>({
         <>
         <DataTableColumnFilter table={table} />
 
-    
         <DataTableViewOptions table={table} />
-
         
         <div className={`overflow-hidden rounded-md border ${className}`}>
             <Table className={`${classNameTable}`}>
