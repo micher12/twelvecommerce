@@ -2,12 +2,12 @@
 
 import { Sidebar, SidebarContent, SidebarFooter, SidebarGroup, SidebarGroupContent, SidebarHeader, SidebarMenu, SidebarMenuButton, SidebarMenuItem, SidebarMenuSub, SidebarMenuSubItem, SidebarProvider, SidebarTrigger } from "@/components/ui/sidebar";
 import Link from "next/link";
-import { ReactNode } from "react";
+import { ReactNode, useRef } from "react";
 import Image from "next/image";
 import { keepPreviousData, useQuery } from "@tanstack/react-query";
 import { getLevelUser } from "@/api/get-level-user";
-import { ArrowLeftFromLine, Blocks, ChevronDown, Funnel, FunnelPlus, Home, Package, PackagePlus, PackageSearch } from "lucide-react";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { ArrowLeftFromLine, Blocks, ChevronDown, FolderPlus, Home, List, ListTree, Package, PackagePlus, PackageSearch } from "lucide-react";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { AdminNavegation } from "@/components/ui/admin-navegation";
 import { usePathname } from "next/navigation";
 import { Collapsible } from "@/components/ui/collapsible";
@@ -22,13 +22,16 @@ const items = [
 const subItems = [
     {id: 1, itemId: 2, label: "Ver produtos", path: "/admin/products", icon: <PackageSearch />},
     {id: 2, itemId: 2, label: "Novo produto", path: "/admin/products/new", icon: <PackagePlus />},
-    {id: 3, itemId: 3, label: "Listar categorias", path: "/admin/category", icon: <Funnel />},
-    {id: 4, itemId: 3, label: "Nova categoria", path: "/admin/category/new_category", icon: <FunnelPlus />},
+    {id: 3, itemId: 3, label: "Listar categorias", path: "/admin/category", icon: <List />},
+    {id: 4, itemId: 3, label: "Nova categoria", path: "/admin/category/new_category", icon: <FolderPlus />},
+    {id: 5, itemId: 3, label: "Listar Sub Categoria", path: "/admin/category/sub_category", icon: <ListTree />},
+    {id: 6, itemId: 3, label: "Nova Sub Categoria", path: "/admin/category/sub_category/new_subcategory", icon: <FolderPlus />},
 ]
 
 export function AdminProvider({children}:{children: ReactNode}){
 
     const path = usePathname();
+    const triggerRef = useRef<HTMLButtonElement>(null);
 
     const { data: level } = useQuery({
         queryKey: ["level-user"],
@@ -78,7 +81,13 @@ export function AdminProvider({children}:{children: ReactNode}){
                                                     {subItems.filter(subItem => subItem.itemId === item.id).map((subItem) => (
                                                         <SidebarMenuSubItem key={subItem.id}>
                                                             <SidebarMenuButton asChild >
-                                                                <Link href={subItem.path} className="flex items-center gap-2">
+                                                                <Link href={subItem.path} className="flex items-center gap-2"
+                                                                onClick={()=>{
+                                                                    if(window.innerWidth <= 860){
+                                                                        triggerRef.current?.click();
+                                                                    }
+                                                                }}
+                                                                >
                                                                     {subItem.icon}
                                                                     {subItem.label}
                                                                 </Link>
@@ -135,9 +144,11 @@ export function AdminProvider({children}:{children: ReactNode}){
                 <Card className="w-full">
                     <CardHeader>
                         <CardTitle className="flex items-center gap-5">
-                            <SidebarTrigger /> 
-                            <AdminNavegation />
+                            <SidebarTrigger ref={triggerRef} /> 
                         </CardTitle>
+                        <CardDescription>
+                            <AdminNavegation />
+                        </CardDescription>
                     </CardHeader>
                     <CardContent>
                         {children}
