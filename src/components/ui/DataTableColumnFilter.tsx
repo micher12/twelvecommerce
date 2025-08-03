@@ -18,7 +18,7 @@ interface DataTableColumnFilterProps<TData> {
 export function DataTableColumnFilter<TData>({ table }: DataTableColumnFilterProps<TData>) {
     const filterableColumns = table
         .getAllColumns()
-        .filter((col) => col.getCanFilter() && !col.id.toLowerCase().startsWith("id"))
+        .filter((col) => col.getCanFilter() && !col.id.toLowerCase().startsWith("id") && !col.id.toLowerCase().includes("star"))
 
     const [selectedColumn, setSelectedColumn] = useState(() => {
         return filterableColumns[0]?.id || ""
@@ -26,13 +26,34 @@ export function DataTableColumnFilter<TData>({ table }: DataTableColumnFilterPro
 
     const [filterValue, setFilterValue] = useState("")
 
-    useEffect(() => {
+   useEffect(() => {
         table.setColumnFilters((prev) => {
             const otherFilters = prev.filter((f) => f.id !== selectedColumn)
             if (filterValue.trim() === "") return otherFilters
-            return [...otherFilters, { id: selectedColumn, value: filterValue }]
+
+            const column = table.getColumn(selectedColumn)
+            const columnType = (column?.columnDef?.meta as { type?: string })?.type
+
+            let parsedValue: unknown = filterValue
+
+            if (columnType === "number") {
+                const numeric = Number(filterValue)
+                if (isNaN(numeric)) return otherFilters
+                    parsedValue = numeric
+            }
+
+            if (selectedColumnType === "date") {
+
+                const date = new Date(filterValue)
+                if (isNaN(date.getTime())) return otherFilters
+
+                parsedValue = filterValue // mantém no formato yyyy-MM-dd
+            }
+
+            return [...otherFilters, { id: selectedColumn, value: parsedValue }]
         })
     }, [selectedColumn, filterValue, table])
+
 
     function extractTextFromHeader(header: unknown, id: string): string {
         if (typeof header === "string") return header
@@ -63,10 +84,9 @@ export function DataTableColumnFilter<TData>({ table }: DataTableColumnFilterPro
         return id
     }
 
-    const selectedColumnLabel = extractTextFromHeader(
-        filterableColumns.find((col) => col.id === selectedColumn)?.columnDef.header,
-        selectedColumn
-    )
+    const selectedColumnDef = filterableColumns.find((col) => col.id === selectedColumn)
+    const selectedColumnLabel = extractTextFromHeader(selectedColumnDef?.columnDef.header, selectedColumn)
+    const selectedColumnType = (selectedColumnDef?.columnDef?.meta as { type?: string } | undefined)?.type
 
     return (
         <div className="flex items-center gap-3 mt-4">
@@ -84,8 +104,13 @@ export function DataTableColumnFilter<TData>({ table }: DataTableColumnFilterPro
             </Select>
 
             <Input
-                className="w-full"
+                className="w-full no-spinner"
                 placeholder={`Filtrar por ${selectedColumnLabel}`}
+                type={
+                    selectedColumnType === "number" ? "number" :
+                    selectedColumnType === "boolean" ? "boolean" :
+                    selectedColumnType === "date" ? "date" : "text"
+                }
                 value={filterValue}
                 onChange={(e) => setFilterValue(e.target.value)}
             />

@@ -121,9 +121,18 @@ export function ListSubCategory(){
         },
         {
             accessorKey: "category.name_category",
-            header: "Categoria",
+            header: ({column})=>(
+                <Button
+                variant={"ghost"}
+                name="Categoria"
+                onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
+                >
+                    Categoria
+                    <ArrowUpDown />
+                </Button>
+            ),
             cell: ({row})=>(
-                <div className="bg-slate-50 text-zinc-900 rounded-md w-fit p-0.5 px-2">{row.original.category?.name_category}</div>
+                <div className="bg-slate-50 text-zinc-900 font-semibold rounded-md w-fit p-0.5 px-2">{row.original.category?.name_category}</div>
             )
         },
         {

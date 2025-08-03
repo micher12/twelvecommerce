@@ -29,6 +29,7 @@
     "crypto-js": "^4.2.0",
     "embla-carousel-autoplay": "^8.6.0",
     "embla-carousel-react": "^8.6.0",
+    "emblor": "^1.4.8",
     "firebase": "^11.10.0",
     "firebase-admin": "^13.4.0",
     "input-otp": "^1.4.2",

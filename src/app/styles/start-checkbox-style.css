@@ -1,0 +1,120 @@
+/* From Uiverse.io by elijahgummer */
+.mymyRadioStarCheckBox {
+    display: flex;
+    justify-content: start;
+    gap: 10px; /* Pode remover se for apenas uma estrela e não precisar de alinhamento */
+}
+
+.myRadioStarCheckBox > input {
+    position: absolute;
+    appearance: none;
+    /* Para uma única estrela, o input pode ficar visível para acessibilidade */
+    /* ou você pode estilizá-lo para ser um checkbox invisível */
+}
+
+.myRadioStarCheckBox > label {
+    cursor: pointer;
+    font-size: 30px; /* Tamanho da estrela */
+    position: relative;
+    display: inline-block;
+    transition: transform 0.3s ease;
+}
+
+.myRadioStarCheckBox > label > svg {
+    fill: #666; /* Cor padrão da estrela (não selecionada) */
+    transition: fill 0.3s ease;
+}
+
+/* Partículas (ajustadas para uma única estrela) */
+.myRadioStarCheckBox > label::before,
+.myRadioStarCheckBox > label::after {
+    content: "";
+    position: absolute;
+    width: 6px;
+    height: 6px;
+    background-color: #ff9e0b; /* Cor das partículas */
+    border-radius: 50%;
+    opacity: 0;
+    transform: scale(0);
+    transition:
+        transform 0.4s ease,
+        opacity 0.4s ease;
+    /* A animação `particle-explosion` será acionada no hover ou checked */
+}
+
+.myRadioStarCheckBox > label::before {
+    top: -15px;
+    left: 50%;
+    transform: translateX(-50%) scale(0);
+}
+
+.myRadioStarCheckBox > label::after {
+    bottom: -15px;
+    left: 50%;
+    transform: translateX(-50%) scale(0);
+}
+
+/* Animação de hover para a estrela (e partículas) */
+.myRadioStarCheckBox > label:hover::before,
+.myRadioStarCheckBox > label:hover::after {
+    opacity: 1;
+    transform: translateX(-50%) scale(1.5);
+    animation: particle-explosion 1s ease-out; /* Aciona a animação de partículas no hover */
+}
+
+.myRadioStarCheckBox > label:hover {
+    transform: scale(1.2);
+    animation: star_pulse 0.6s infinite alternate; /* Animação de pulso no hover */
+}
+
+/* Brilho e animação da estrela no hover */
+.myRadioStarCheckBox > label:hover > svg {
+    fill: #ff9e0b; /* Cor da estrela no hover */
+    filter: drop-shadow(0 0 15px rgba(255, 158, 11, 0.9));
+    animation: shimmer 1s ease infinite alternate; /* Animação de brilho no hover */
+}
+
+/* ESTRELA SELECIONADA (CHECKED) */
+.myRadioStarCheckBox > input:checked + label > svg {
+    fill: #ff9e0b; /* Cor da estrela quando selecionada */
+    filter: drop-shadow(0 0 15px rgba(255, 158, 11, 0.9));
+    animation: star_pulse 0.8s infinite alternate; /* Animação de pulso quando selecionada */
+}
+
+/* As animações originais */
+@keyframes star_pulse {
+    0% {
+        transform: scale(1);
+    }
+
+    100% {
+        transform: scale(1.1);
+    }
+}
+
+@keyframes particle-explosion {
+    0% {
+        opacity: 0;
+        transform: scale(0.5);
+    }
+
+    50% {
+        opacity: 1;
+        transform: scale(1.2);
+    }
+
+    100% {
+        opacity: 0;
+        transform: scale(0.5);
+    }
+}
+
+@keyframes shimmer {
+    0% {
+        filter: drop-shadow(0 0 10px rgba(255, 158, 11, 0.5));
+    }
+
+    100% {
+        filter: drop_shadow(0 0 20px rgba(255, 158, 11, 1));
+    }
+}

@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { Breadcrumb, BreadcrumbItem, BreadcrumbLink, BreadcrumbList, BreadcrumbPage, BreadcrumbSeparator } from "./breadcrumb";
 import { usePathname } from "next/navigation";
-import { Blocks, FolderPlus, Home, ListTree, Package, PackagePlus, Settings2 } from "lucide-react";
+import { Blocks, FolderPlus, Home, ListTree, Package, PackagePlus, Settings2, SquarePen } from "lucide-react";
 import { JSX } from "react";
 import React from "react";
 
@@ -18,6 +18,7 @@ const routers = new Map<string, {path: string; label: string; icon: JSX.Element 
     ["sub_category", { path: "/admin/category/sub_category", label: "Sub Categorias", icon: <ListTree /> }],
     ["new_subcategory", { path: "/admin/category/sub_category/new_subcategory", label: "Nova Sub Categoria", icon: <FolderPlus /> }],
     ["edit_subcategory", { path: "/admin/category/sub_category/edit_subcategory", label: "Editar Sub Categoria", icon: <Settings2 /> }],
+    ["edit_product", { path: "/admin/products/edit_product", label: "Editar produto", icon: <SquarePen /> }],
 
 ]);
 
