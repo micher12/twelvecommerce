@@ -36,6 +36,7 @@ export default async function EditProductPage({ searchParams }: PageProps){
 
     return(
         <HydrationBoundary state={dehydrate(queryClient)}>
+            <h2 className="text-3xl font-bold mb-5">Editar produto:</h2>
             <EditProduct id={Number(id)} />
         </HydrationBoundary>
     )

@@ -24,6 +24,7 @@ import { useEffect, useMemo, useState } from "react";
 import { useFieldArray, useForm } from "react-hook-form";
 import z from "zod/v4";
 import { EditVariations } from "./variations-edit-form";
+import { SkeletonComponent } from "@/components/ui/skeleton-componet";
 
 type paramsProps = {
     id: number
@@ -347,11 +348,10 @@ export function EditProduct({id}: paramsProps){
     const {fields: variations, append, remove} = useFieldArray({control: form.control, name: "variations"})
 
     if(isLoading)
-        return <h2>CARREGANDO</h2>
+        return <SkeletonComponent type={"edit_product"} />
 
     return(
         <div>
-            <h2 className="text-3xl font-bold">Editar produto:</h2>
             <Form {...form}>
                 <form 
                 onSubmit={form.handleSubmit(handleSubmitForm)}

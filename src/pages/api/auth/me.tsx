@@ -13,7 +13,15 @@ export default async function me(req: NextApiRequest, res: NextApiResponse){
     if(!session)
         return res.status(400).json({erro: "Sessão inválida!"});
 
-    const decoded = await admin.auth().verifySessionCookie(session);
+    try {
 
-    return res.status(200).json({sucesso: "ok", uid: decoded.uid});
+        const decoded = await admin.auth().verifySessionCookie(session, true);
+
+        return res.status(200).json({sucesso: "ok", uid: decoded.uid});
+
+    } catch (error) {
+        console.log(error);
+
+        return res.status(401).json({erro: "Sessão inválida ou expirada!"});
+    }
 }
