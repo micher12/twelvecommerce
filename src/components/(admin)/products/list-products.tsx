@@ -6,6 +6,7 @@ import { getSubCategorys } from "@/api/get-sub-categorys";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
+import { CustomZoomImage } from "@/components/ui/custom-zoom-image";
 import { DataTable } from "@/components/ui/DataTable";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuGroup, DropdownMenuItem, DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { SkeletonComponent } from "@/components/ui/skeleton-componet";
@@ -17,7 +18,10 @@ import { useDeleteProduct } from "@/models/use-delete-product";
 import { useQuery } from "@tanstack/react-query";
 import { ColumnDef, Row } from "@tanstack/react-table";
 import { ArrowUpDown, MoreHorizontal } from "lucide-react";
+import Image from "next/image";
 import Link from "next/link";
+import { useState } from "react";
+import 'react-medium-image-zoom/dist/styles.css'
 
 interface PageProps {
     searchParams: {
@@ -38,6 +42,16 @@ export function ListProducts({searchParams}: PageProps){
 
     const { setAlert} = useGetAuthContext() as UseAuthContextProps;
     const { mutateAsync: deleteProduct } = useDeleteProduct();
+
+    const [expandImage, setExpandeImage] = useState(false);
+    const [src, setSrc] = useState("");
+    const [alt, setAlt] = useState("");
+
+    function enableZoom(src: string, alt: string){
+        setSrc(src)
+        setAlt(alt)
+        setExpandeImage(!expandImage);
+    }
 
     const fetchProduct = async ()=>{
         const res = await getProducts({category, subcategory});
@@ -119,6 +133,29 @@ export function ListProducts({searchParams}: PageProps){
             ),
             enableSorting: false,
             enableHiding: false,
+        },
+        {
+            accessorKey: "product.urls_product",
+            header: "Capa",
+            cell: ({row})=>{
+
+                if(!row.original.product.urls_product)
+                    return;
+
+                const urls = JSON.parse(row.original.product.urls_product as string) as string[];
+
+                const sorted = urls.sort((a, b) => {
+                    return Number(b.includes("capa_")) - Number(a.includes("capa_"));
+                });
+                
+                return <Image 
+                onClick={()=>enableZoom(sorted[0], "Capa produto")} 
+                priority 
+                src={sorted[0]} width={120} height={50} alt="Capa produto" 
+                className="aspect-square rounded-md cursor-zoom-in min-w-[50px] h-[50px] sm:min-w-[80px] sm:max-w-[80px] sm:h-[80px]" 
+                style={{ objectFit: 'cover' }} />
+         
+            }
         },
         {
             accessorKey: "product.name_product",
@@ -300,6 +337,7 @@ export function ListProducts({searchParams}: PageProps){
 
     return(
         <div className="mt-5">
+            {expandImage && <CustomZoomImage setExpandeImage={setExpandeImage} alt={alt} src={src} />}
             {realData && <DataTable  columns={columns} data={realData} className="mt-5" />}
         </div>
     )

@@ -5,8 +5,8 @@ import { createProduct } from "./create-product";
 
 
 interface dataProps{
-    product: useProductInterface
-    variations: useVariationInterface[]
+    product: useProductInterface;
+    variations: useVariationInterface[];
 }
 
 export function useCreateProduct(){

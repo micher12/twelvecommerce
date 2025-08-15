@@ -16,6 +16,7 @@ interface VaritionsProps{
         id_subcategory: string | null;
         price_product: number;
         star_product: boolean;
+        files: unknown,
         variations: {
             price_variation: number;
             amount_variation: number;

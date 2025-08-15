@@ -19,6 +19,7 @@ export async function getSingleProduct({id_product}: dataProps){
         p.description_product,
         p.price_product,
         p.star_product,
+        p.urls_product,
         p.createdat,
 
         -- Dados da variação

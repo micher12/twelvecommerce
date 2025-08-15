@@ -24,6 +24,7 @@ interface EditVariationsProps{
         id_subcategory: string | null;
         price_product: number;
         star_product: boolean;
+        urls_product: string;
         variations: {
             id_variation: number;
             price_variation: number;
@@ -76,6 +77,10 @@ export function EditVariations({index, form, product, variation, remove, length}
     }  
 
     async function handleDeleteAttribute(removeAttributes: UseFieldArrayRemove, attributeIndex: number, attribute: {name_attribute: string, value_attribute: string}, id_variation: number) {
+
+        if(attribute.name_attribute.trim() === "" && attribute.value_attribute.trim() === "")
+            return removeAttributes(attributeIndex);
+        
         const res = await deleteAttribute(id_variation, attribute, product?.id_product as number);
 
         if(res.erro)

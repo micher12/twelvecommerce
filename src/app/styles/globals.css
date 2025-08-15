@@ -143,12 +143,20 @@ body {
     transition: all .4s ease;
 }
 
+.fadeIn-sm{
+    animation: fadeIn .6s ease forwards;
+}
+
 .fadeIn{
     animation: fadeIn 1.4s ease forwards;
 }
 
 .fadeInPop{
     animation: fadeInPop .6s cubic-bezier(0.68,-0.6,0.32,1.6) forwards;
+}
+
+.fadeOut-sm{
+    animation: fadeOut .6s ease forwards;
 }
 
 .fadeOut{
@@ -194,6 +202,14 @@ body {
     @apply border-ring ring-ring/50 ring-[3px] aria-invalid:ring-destructive/20 dark:aria-invalid:ring-destructive/40 aria-invalid:border-destructive
 }
 
+.zoomIn{
+    animation: zoomIn .6s cubic-bezier(0.85,0,0.15,1) forwards;
+}
+
+.zoomOut{
+    animation: zoomOut .6s cubic-bezier(0.85,0,0.15,1) forwards;
+}
+
 @keyframes fadeIn {
     0%{
         opacity: 0;
@@ -204,6 +220,24 @@ body {
     }
     100%{
         opacity: 1;
+    }
+}
+
+@keyframes zoomIn {
+    0%{
+        transform: scale(0);
+    }
+    100%{
+        transform: scale(1);
+    }
+}
+
+@keyframes zoomOut {
+    0%{
+        transform: scale(1);
+    }
+    100%{
+        transform: scale(0);
     }
 }
 

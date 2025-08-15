@@ -11,4 +11,5 @@ export type useSingleProductInterface = {
     price_product: number
     price_variation: number
     star_product: string
+    urls_product: string
 } 

@@ -9,7 +9,7 @@ import { Select, SelectContent, SelectGroup, SelectItem, SelectTrigger, SelectVa
 import { Textarea } from "@/components/ui/textarea";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useQuery } from "@tanstack/react-query";
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useFieldArray, useForm } from "react-hook-form";
 import z from "zod";
 import { InputNumber } from 'primereact/inputnumber';
@@ -23,12 +23,30 @@ import { useGetAuthContext } from "@/lib/useAuthContext";
 import { UseAuthContextProps } from "@/interfaces/use-auth-context-interface";
 import { useCreateProduct } from "@/models/use-create-product";
 import { CreateVariations } from "./variations-create-form";
+import ImageUploader from "@/components/image-uploader";
+import { FileWithPreview } from "@/hooks/use-file-upload";
+import { getApp, initializeApp } from "firebase/app";
+import { getFirebaseConfig } from "@/lib/use-firebase-config";
+import { getAuth } from "firebase/auth";
+import { getDownloadURL, getStorage, ref, uploadBytes } from "firebase/storage";
+import { v4 as uuidv4 } from "uuid";
+import { useInsertImagesProduct } from "@/models/use-insert-images-product";
 
 export function FormCreateProduct(){
 
     const [selectedCategoria, setSelectedCategoria] = useState<number | null>(null);
     const { setAlert } = useGetAuthContext() as UseAuthContextProps;
     const { mutateAsync: createProduct } = useCreateProduct();
+    const { mutateAsync: insertImageProduct } = useInsertImagesProduct();
+
+    async function initMyApp(){
+        try {
+            return getApp();
+        } catch {
+            const firebaseConfig = await getFirebaseConfig();
+            return initializeApp(firebaseConfig);
+        }
+    }
 
     const fetchCategory = async ()=>{
         return await getCategorys();
@@ -64,6 +82,7 @@ export function FormCreateProduct(){
         id_subcategory: z.string().nullable(),
         price_product: z.number({message: "Valor não pode ser nulo"}).min(1, {message: "Defina um valor maior que 0"}),
         star_product: z.boolean(),
+        files: z.any(),
         variations: z.array(z.object({
             price_variation: z.number().min(1, {message: "Defina um valor maior que 0"})
             .refine(val => {
@@ -87,15 +106,25 @@ export function FormCreateProduct(){
             description_product: "",
             id_category: "",
             id_subcategory: null,
+            files: null,
             price_product: 0,
             star_product: false,
         }
     })
 
     const { fields, append, remove } = useFieldArray({control: form.control, name: "variations"})
+    const [files, setFiles] = useState<FileWithPreview[] | null>(null);
+
+    useEffect(()=>{
+        form.setValue("files", files);
+    },[files]);
 
     async function handleSubmitForm(data: formProps){
-
+        
+        if(!files || files.length <= 0) return form.setError("files", {
+            type: "required",
+            message: "Adicione pelo menos uma imagem!"
+        })
 
         const finalData: {
             product: useProductInterface
@@ -111,7 +140,7 @@ export function FormCreateProduct(){
                 star_product: data.star_product.toString(),
                 createdat: new Date().toISOString(),
             },
-            variations: data.variations
+            variations: data.variations,
         }
 
         const res = await createProduct(finalData);
@@ -119,6 +148,27 @@ export function FormCreateProduct(){
         if(res.erro)
             return setAlert("erro", res.erro);
 
+
+        const app = await initMyApp();
+        getAuth(app);
+        const storage = getStorage(app);
+
+        const id_product = res.id_product as number;
+
+        const promises = [];
+
+        for(const { file, capa } of files){
+            const randomId = uuidv4();
+            const name_image = `${capa ? "capa_" : ""}${randomId}`;
+            const refStorage = ref(storage, `twelve_products/${id_product}/${name_image}`);
+            const uploadPromise = uploadBytes(refStorage, file as File).then(() => getDownloadURL(refStorage))
+            promises.push(uploadPromise);
+        }
+
+        const urls = await Promise.all(promises);
+
+        await insertImageProduct({urls, id_product});
+  
         setAlert("sucesso", "Produto cadastrado com sucesso!");
     }
 
@@ -273,6 +323,16 @@ export function FormCreateProduct(){
                         <FormControl>
                             <StarCheckbox checked={field.value} onChange={field.onChange} />
                         </FormControl>
+                        <FormMessage />
+                    </FormItem>
+                )}
+                />
+
+                <FormField 
+                name="files"
+                render={()=>(
+                    <FormItem>
+                        <ImageUploader setFile={setFiles} />
                         <FormMessage />
                     </FormItem>
                 )}

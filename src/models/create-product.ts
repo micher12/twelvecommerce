@@ -5,8 +5,8 @@ import { useVariationInterface } from "@/interfaces/use-variation-interface";
 import { connectionAdmin } from "./connectionAdmin";
 
 interface CreateProductProps {
-    product: useProductInterface
-    variations: useVariationInterface[]
+    product: useProductInterface;
+    variations: useVariationInterface[];
 }
 
 type responseVariation = {
@@ -23,7 +23,8 @@ type responseAttributeValues = {
     value_attribute: string
 }
 
-export async function createProduct({ product, variations, }: CreateProductProps) {
+export async function createProduct({ product, variations }: CreateProductProps) {
+
     try {
 
         const id_subcategory = product.id_subcategory === 0 ? "null" : product.id_subcategory.toString();

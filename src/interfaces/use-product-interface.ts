@@ -7,4 +7,5 @@ export type useProductInterface = {
     price_product: number,
     star_product: string,
     createdat: string,
+    urls_product?: string,
 }

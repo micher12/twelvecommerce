@@ -19,12 +19,20 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { useQuery } from "@tanstack/react-query"
 import { Plus } from "lucide-react";
 import { InputNumber } from "primereact/inputnumber";
-import React from "react";
+import React, { useRef } from "react";
 import { useEffect, useMemo, useState } from "react";
 import { useFieldArray, useForm } from "react-hook-form";
 import z from "zod/v4";
 import { EditVariations } from "./variations-edit-form";
 import { SkeletonComponent } from "@/components/ui/skeleton-componet";
+import ImageUploader from "@/components/image-uploader";
+import { FileWithPreview } from "@/hooks/use-file-upload";
+import { deleteObject, getBlob, getDownloadURL, getStorage, ref, uploadBytes } from "firebase/storage";
+import { getApp, initializeApp } from "firebase/app";
+import { getFirebaseConfig } from "@/lib/use-firebase-config";
+import { getAuth } from "firebase/auth";
+import { v4 } from "uuid";
+import { updateImagesProducts } from "@/models/update-images-products";
 
 type paramsProps = {
     id: number
@@ -47,8 +55,22 @@ type attributesArray = {
 
 export function EditProduct({id}: paramsProps){
 
-    const { setAlert } = useGetAuthContext() as UseAuthContextProps;
+    const { setAlert, setLoader } = useGetAuthContext() as UseAuthContextProps;
     const { mutateAsync: updateProduct } = useUpdateProduct();
+
+    const [files, setFiles] = useState<FileWithPreview[] | null>(null);
+    const [cape, setCape] = useState<{ type: "file" | "url"; value: FileWithPreview | string } | undefined>()
+    const [urlsToDelete, setUrlsToDelete] = useState<string[]>([]);
+    const updatedImage = useRef(false);
+
+   async function initMyApp(){
+        try {
+            return getApp();
+        } catch {
+            const firebaseConfig = await getFirebaseConfig();
+            return initializeApp(firebaseConfig);
+        }
+   }
 
     const fetchSingleProduct = async()=>{
         const res = await getSingleProduct({id_product: id});
@@ -88,6 +110,21 @@ export function EditProduct({id}: paramsProps){
     })
 
     const product = data?.[0];
+    const urls = useMemo(()=> {
+        if(product){
+            try {
+                return JSON.parse(product?.urls_product as string) !== null ? JSON.parse(product?.urls_product as string) as string[] : []
+            } catch{
+                return []
+            }
+        }
+
+        return []
+    }, [product])
+
+    const sortedUrl = urls.sort((a, b) => {
+        return Number(b.includes("capa_")) - Number(a.includes("capa_"));
+    });
 
     const custom: attributesArray[] = data?.flatMap(({id_variation, price_variation, amount_variation,attributes})=>{
         const attributesArray: attributesProps[] = JSON.parse(attributes);
@@ -102,6 +139,7 @@ export function EditProduct({id}: paramsProps){
         id_subcategory: z.string().nullable(),
         price_product: z.number({message: "Valor não pode ser nulo"}).min(1, {message: "Defina um valor maior que 0"}),
         star_product: z.boolean(),
+        urls_product: z.string(),
         variations: z.array(z.object({
             id_variation: z.number(),
             price_variation: z.number().min(1, {message: "Defina um valor maior que 0"})
@@ -129,6 +167,7 @@ export function EditProduct({id}: paramsProps){
             id_product: 0,
             price_product: 0,
             star_product: false,
+            urls_product: "",
             variations: [
                 {
                     amount_variation: 0,
@@ -166,6 +205,7 @@ export function EditProduct({id}: paramsProps){
                 id_subcategory: product.id_subcategory?.toString() || null,
                 price_product: product.price_product || 0,
                 star_product: product.star_product === "true",
+                urls_product: product.urls_product || "",
                 variations: custom.map(({variation, attributes})=>{
                     const data = {
                         id_variation: variation.id_variation,
@@ -283,69 +323,194 @@ export function EditProduct({id}: paramsProps){
 
         return changes;
     }
+    
+    async function updateImages(){
+        const app = await initMyApp();
+        const storage = getStorage(app);
+        getAuth(app);
 
+        let hasChanges = false;
+        let finalUrls = [...urls];
 
+        // EXCLUIR IMAGENS
+        if (urlsToDelete.length > 0) {
+            hasChanges = true;
+            finalUrls = finalUrls.filter(url => !urlsToDelete.includes(url));
+
+            const deletePromises = urlsToDelete.map(url => deleteObject(ref(storage, url)));
+            await Promise.all(deletePromises);
+        }
+
+        // PROCESSAR NOVOS UPLOADS
+        let newCapeUrlFromFile: string | null = null;
+
+        if (files && files.length > 0) {
+            hasChanges = true;
+
+            const uploadPromises = files.map(async (fileItem) => {
+                const file = fileItem.file as File;
+
+                // Se for a nova capa, já salva com prefixo cape_
+                let fileName: string;
+                if (cape?.type === "file" && (cape.value as FileWithPreview).file === file) {
+                    fileName = `cape_${v4()}`; // cape_ + nome
+                } else {
+                    fileName = v4();
+                }
+
+                const storageRef = ref(storage, `twelve_products/${id}/${fileName}`);
+                const snapshot = await uploadBytes(storageRef, file);
+                const downloadUrl = await getDownloadURL(snapshot.ref);
+
+                if (cape?.type === "file" && (cape.value as FileWithPreview).file === file) {
+                    newCapeUrlFromFile = downloadUrl;
+                }
+
+                return downloadUrl;
+            });
+
+            const newlyUploadedUrls = await Promise.all(uploadPromises);
+            finalUrls.push(...newlyUploadedUrls);
+        }
+
+        // TROCAR CAPA / SWAP
+        const isCapeChanged = cape?.value !== urls[0];
+        if (isCapeChanged) {
+            hasChanges = true;
+
+            const oldCapeUrl = urls[0]; // capa atual
+            const newCapeTargetUrl = cape?.type === "url" ? cape.value as string : newCapeUrlFromFile;
+
+            if (oldCapeUrl && newCapeTargetUrl) {
+                // Troca a antiga capa para nome aleatório
+                const oldCapeRef = ref(storage, oldCapeUrl);
+                const oldBlob = await getBlob(oldCapeRef).catch(() => null);
+                if (oldBlob) {
+                    await deleteObject(oldCapeRef);
+                    const newOldName = v4();
+                    const newOldRef = ref(storage, `twelve_products/${id}/${newOldName}`);
+                    const snapshotOld = await uploadBytes(newOldRef, oldBlob);
+                    const randomUrl = await getDownloadURL(snapshotOld.ref);
+
+                    const oldIndex = finalUrls.indexOf(oldCapeUrl);
+                    if (oldIndex > -1) finalUrls[oldIndex] = randomUrl;
+                }
+
+                // Troca a nova capa para nome com prefixo "cape_"
+                const newCapeRef = ref(storage, newCapeTargetUrl);
+                const newCapeBlob = await getBlob(newCapeRef).catch(() => null);
+
+                if (newCapeBlob) {
+                    await deleteObject(newCapeRef);
+                    const capeName = `cape_${v4()}`;
+                    const newCapeStorageRef = ref(storage, `twelve_products/${id}/${capeName}`);
+                    const snapshotCape = await uploadBytes(newCapeStorageRef, newCapeBlob);
+                    const capeUrl = await getDownloadURL(snapshotCape.ref);
+
+                    // Remove qualquer ocorrência anterior e coloca no início
+                    const newIndex = finalUrls.indexOf(newCapeTargetUrl);
+
+                    if (newIndex > -1) finalUrls.splice(newIndex, 1);
+                        finalUrls.unshift(capeUrl);
+                }
+            }
+        }
+
+        // ATUALIZAR NO BANCO DE DADOS
+        if (hasChanges) {
+            try {
+                await updateImagesProducts({ urls: finalUrls, id_product: id });
+                updatedImage.current = true;
+            } catch (error) {
+                console.error("Erro ao atualizar as imagens do produto:", error);
+            }
+        }
+    }
 
     async function handleSubmitForm(thisData: formProps){
         if(!product) return
 
-        const changes: { key: string; newValue: string }[] = [];
+        setLoader(true);
 
-        const productValues: useProductInterface = {
-            id_product: thisData.id_product,
-            name_product: thisData.name_product,
-            description_product: thisData.description_product,
-            id_category: Number(thisData.id_category),
-            id_subcategory: Number(thisData.id_subcategory),
-            price_product: thisData.price_product,
-            star_product: thisData.star_product.toString(),
-            createdat: "",
-        }
+        try {
+           
+            const changes: { key: string; newValue: string }[] = [];
 
-        const keys = Object.keys(productValues) as (keyof useProductInterface)[];
+            //update images:
+            if(updatedImage.current)
+                return setAlert("warning", "Atualize a página para modificar a imagem novamente!");
 
-        for (const key of keys){
-            if(key === "createdat") continue;
-            
-            const oldValue = product[key];
-            const newValue = productValues[key].toString();
+            await updateImages();
 
-            if(oldValue.toString().trim() !== newValue.toString().trim()){
-                changes.push({
-                    key,
-                    newValue,
-                })
+            // update products:
+            const productValues: useProductInterface = {
+                id_product: thisData.id_product,
+                name_product: thisData.name_product,
+                description_product: thisData.description_product,
+                id_category: Number(thisData.id_category),
+                id_subcategory: Number(thisData.id_subcategory),
+                price_product: thisData.price_product,
+                star_product: thisData.star_product.toString(),
+                urls_product: thisData.urls_product,
+                createdat: "",
             }
+
+            const keys = Object.keys(productValues) as (keyof useProductInterface)[];
+
+            for (const key of keys){
+                if(key === "createdat" || key === "urls_product") continue;
+                
+                const oldValue = product[key];
+                const newValue = productValues[key].toString();
+
+                if(oldValue.toString().trim() !== newValue.toString().trim()){
+                    changes.push({
+                        key,
+                        newValue,
+                    })
+                }
+            }
+
+            const old = custom.map((item) => ({
+                amount_variation: item.variation.amount_variation ?? 0,
+                price_variation: item.variation.price_variation ?? 0,
+                id_variation: item.variation.id_variation ?? 0,
+                attributes: item.attributes
+            }));
+
+            const variations = getModifiedVariations(old, thisData.variations) as VariationChange[];
+
+            const chandeData = {
+                id: thisData.id_product,
+                changes,
+                variations
+            }
+
+            const res = await updateProduct(chandeData)
+            
+            if(res?.warning && !updatedImage.current)
+                return setAlert("warning", res.warning);
+
+            if(res?.erro)
+                return setAlert("erro", res.erro);
+
+
+            setAlert("sucesso", "Produto atualizado com sucesso!");
+        } finally {
+            setLoader(false);
         }
-
-
-        const old = custom.map((item) => ({
-            amount_variation: item.variation.amount_variation ?? 0,
-            price_variation: item.variation.price_variation ?? 0,
-            id_variation: item.variation.id_variation ?? 0,
-            attributes: item.attributes
-        }));
-
-        const variations = getModifiedVariations(old, thisData.variations) as VariationChange[];
-
-        const chandeData = {
-            id: thisData.id_product,
-            changes,
-            variations
-        }
-
-        const res = await updateProduct(chandeData)
-        
-        if(res?.warning)
-            return setAlert("warning", res.warning);
-
-        if(res?.erro)
-            return setAlert("erro", res.erro);
-
-        setAlert("sucesso", "Produto atualizado com sucesso!");
     }
 
     const {fields: variations, append, remove} = useFieldArray({control: form.control, name: "variations"})
+
+    function deleteUrl(url: string){
+        setUrlsToDelete(prevUrls => {
+            if (prevUrls.includes(url)) {
+                return prevUrls;
+            }
+            return [...prevUrls, url];
+        });
+    }
 
     if(isLoading)
         return <SkeletonComponent type={"edit_product"} />
@@ -504,46 +669,55 @@ export function EditProduct({id}: paramsProps){
                         </FormItem>
                     )}
                     />
-       
                     
-                        <FormField 
-                        control={form.control}
-                        name="variations"
-                        render={()=>(
-                            <FormItem>
-                                <div 
-                                onClick={()=>append({
-                                    amount_variation: 0,
-                                    id_variation: 0,
-                                    price_variation: form.getValues("price_product"),
-                                    attributes: [{
-                                        name_attribute: "",
-                                        value_attribute: ""
-                                    }]
-                                })}
-                                className="flex items-center gap-2 bg-zinc-200 text-zinc-900 font-semibold w-fit px-2 rounded-md cursor-pointer py-0.5"
-                                >
-                                    <Plus size={16} /> Adicionar variação
-                                </div>
+                    <FormField 
+                    name="files"
+                    render={()=>(
+                        <FormItem>
+                            <ImageUploader deleteFile={true} deleteUrl={deleteUrl} changeCape={setCape} urls={sortedUrl} setFile={setFiles} />
+                            <FormMessage />
+                        </FormItem>
+                    )}
+                    />
+                    
+                    <FormField 
+                    control={form.control}
+                    name="variations"
+                    render={()=>(
+                        <FormItem>
+                            <div 
+                            onClick={()=>append({
+                                amount_variation: 0,
+                                id_variation: 0,
+                                price_variation: form.getValues("price_product"),
+                                attributes: [{
+                                    name_attribute: "",
+                                    value_attribute: ""
+                                }]
+                            })}
+                            className="flex items-center gap-2 bg-zinc-200 text-zinc-900 font-semibold w-fit px-2 rounded-md cursor-pointer py-0.5"
+                            >
+                                <Plus size={16} /> Adicionar variação
+                            </div>
 
-                                <div className="flex items-start gap-8 flex-wrap mt-5">
-                                    {variations.map((variation, index)=>(
-                                        <EditVariations 
-                                            key={variation.id}
-                                            length={variations.length}
-                                            index={index}
-                                            product={product}
-                                            variation={variation}
-                                            remove={remove}
-                                            form={form}
-                                        />
-                                    ))}
-                                </div>
+                            <div className="flex items-start gap-8 flex-wrap mt-5">
+                                {variations.map((variation, index)=>(
+                                    <EditVariations 
+                                        key={variation.id}
+                                        length={variations.length}
+                                        index={index}
+                                        product={product}
+                                        variation={variation}
+                                        remove={remove}
+                                        form={form}
+                                    />
+                                ))}
+                            </div>
 
-                                <FormMessage />
-                            </FormItem>
-                        )}
-                        />
+                            <FormMessage />
+                        </FormItem>
+                    )}
+                    />
 
                     <Button type="submit" className="w-fit font-semibold cursor-pointer">Atualizar</Button>
 
