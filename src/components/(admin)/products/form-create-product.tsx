@@ -8,7 +8,7 @@ import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectGroup, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useEffect, useMemo, useState } from "react";
 import { useFieldArray, useForm } from "react-hook-form";
 import z from "zod";
@@ -38,6 +38,8 @@ export function FormCreateProduct(){
     const { setAlert } = useGetAuthContext() as UseAuthContextProps;
     const { mutateAsync: createProduct } = useCreateProduct();
     const { mutateAsync: insertImageProduct } = useInsertImagesProduct();
+
+    const queryClient = useQueryClient();
 
     async function initMyApp(){
         try {
@@ -168,7 +170,19 @@ export function FormCreateProduct(){
         const urls = await Promise.all(promises);
 
         await insertImageProduct({urls, id_product});
-  
+
+        queryClient.setQueryData<useProductInterface[]>(["products", undefined, undefined, 1, 10], (prev) => {
+            if(!prev) return prev;
+            
+            return prev.map((item)=>{
+                if(item.id_product === id_product){
+                    return {...item, urls_product: JSON.stringify(urls)};
+                }
+
+                return item;
+            })
+        });
+
         setAlert("sucesso", "Produto cadastrado com sucesso!");
     }
 

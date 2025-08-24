@@ -25,7 +25,7 @@ export function useCreateProduct(){
         onSuccess(data, _variables, context) {
             if(!data.sucesso) return;
 
-            queryClient.setQueryData<useProductInterface[]>(["products", undefined, undefined],(prev)=>{
+            queryClient.setQueryData<useProductInterface[]>(["products", undefined, undefined, 1, 10], (prev) => {
                 if(!prev) return [{...context.product, id_product: data.id_product}];
                 
                 const oldData = [{...context.product, id_product: data.id_product}, ...prev]

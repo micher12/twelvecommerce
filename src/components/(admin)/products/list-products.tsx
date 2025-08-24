@@ -13,20 +13,27 @@ import { SkeletonComponent } from "@/components/ui/skeleton-componet";
 import { StarCheckbox } from "@/components/ui/star-checkbox";
 import { UseAuthContextProps } from "@/interfaces/use-auth-context-interface";
 import { useProductInterface } from "@/interfaces/use-product-interface";
+import { getFirebaseConfig } from "@/lib/use-firebase-config";
 import { useGetAuthContext } from "@/lib/useAuthContext";
 import { useDeleteProduct } from "@/models/use-delete-product";
 import { useQuery } from "@tanstack/react-query";
 import { ColumnDef, Row } from "@tanstack/react-table";
+import { getApp, initializeApp } from "firebase/app";
+import { getAuth } from "firebase/auth";
+import { deleteObject, getStorage, listAll, ref } from "firebase/storage";
 import { ArrowUpDown, MoreHorizontal } from "lucide-react";
 import Image from "next/image";
 import Link from "next/link";
+import { useSearchParams } from "next/navigation";
 import { useState } from "react";
-import 'react-medium-image-zoom/dist/styles.css'
+import 'react-medium-image-zoom/dist/styles.css';
 
 interface PageProps {
     searchParams: {
         category?: string;
         subcategory?: string;
+        page: number;
+        limit: number;
     };
 }
 
@@ -38,7 +45,7 @@ type realDataProps = {
 
 export function ListProducts({searchParams}: PageProps){
 
-    const { category, subcategory } = searchParams;
+    const { category, subcategory, page, limit } = searchParams;
 
     const { setAlert} = useGetAuthContext() as UseAuthContextProps;
     const { mutateAsync: deleteProduct } = useDeleteProduct();
@@ -46,6 +53,18 @@ export function ListProducts({searchParams}: PageProps){
     const [expandImage, setExpandeImage] = useState(false);
     const [src, setSrc] = useState("");
     const [alt, setAlt] = useState("");
+    const [maxPage, setMaxPage] = useState(1);
+    const params = useSearchParams();
+
+    async function initApp(){
+        try {
+            return getApp();
+        } catch {
+            const config = await getFirebaseConfig();
+
+            return initializeApp(config);
+        }
+    }
 
     function enableZoom(src: string, alt: string){
         setSrc(src)
@@ -54,11 +73,13 @@ export function ListProducts({searchParams}: PageProps){
     }
 
     const fetchProduct = async ()=>{
-        const res = await getProducts({category, subcategory});
+        const res = await getProducts({category, subcategory, page, limit});
 
-        if(res.sucesso)
+        if(res.sucesso){
+            setMaxPage(res.count as number);
             return res.products
-
+        }
+            
         return null;
     }
 
@@ -76,7 +97,7 @@ export function ListProducts({searchParams}: PageProps){
     }
 
     const { data: products } = useQuery({
-        queryKey: ["products", category, subcategory],
+        queryKey: ["products", category, subcategory, page, limit],
         queryFn: fetchProduct,
     })
 
@@ -102,13 +123,34 @@ export function ListProducts({searchParams}: PageProps){
     });
 
     async function handleDeleteProduct(data: number | Row<realDataProps>[]){
-        const res = await deleteProduct(data);
+        const objetc = {data, params};
+        const { res } = await deleteProduct(objetc);
         
         if(res.erro)
             return setAlert("erro", res.erro);
 
-        setAlert("sucesso", "Produto excluído com sucesso!");
+        const ids = res.dataIds as number[];
 
+        const app = await initApp();
+        const auth = getAuth(app);
+        const storage = getStorage(app);
+
+        if(auth.currentUser){
+            const promise: Promise<void>[] = [];
+   
+            for(const id of ids){
+                const imageRef = ref(storage, `twelve_products/${id}`);
+                const res = await listAll(imageRef);
+
+                res.items.forEach((item) => {
+                    promise.push(deleteObject(item));
+                });
+            }
+        
+            await Promise.all(promise);
+        }
+
+        setAlert("sucesso", "Produto excluído com sucesso!");
     }
 
     const columns: ColumnDef<realDataProps>[] = [
@@ -338,7 +380,7 @@ export function ListProducts({searchParams}: PageProps){
     return(
         <div className="mt-5">
             {expandImage && <CustomZoomImage setExpandeImage={setExpandeImage} alt={alt} src={src} />}
-            {realData && <DataTable  columns={columns} data={realData} className="mt-5" />}
+            {realData && <DataTable limit={limit} page={(page-1)} maxPage={maxPage} columns={columns} data={realData} className="mt-5" />}
         </div>
     )
 }

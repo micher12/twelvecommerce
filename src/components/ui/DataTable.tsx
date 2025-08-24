@@ -12,6 +12,10 @@ interface DataTableProps<TData, TValue> {
     data: TData[]
     className?: string
     classNameTable?: string
+    page?: number;
+    maxPage?: number;
+    pageSize?: number;
+    limit?: number;
 }
 
 export function DataTable<TData, TValue>({
@@ -19,6 +23,9 @@ export function DataTable<TData, TValue>({
     data,
     className,
     classNameTable,
+    page = 0,
+    maxPage = 1,
+    limit = 10,
 }: DataTableProps<TData, TValue>) {
 
     const [sorting, setSorting] = React.useState<SortingState>([])
@@ -27,6 +34,8 @@ export function DataTable<TData, TValue>({
     const table = useReactTable({
         data,
         columns,
+        pageCount: maxPage,
+        manualPagination: true,
         getCoreRowModel: getCoreRowModel(),
         onSortingChange: setSorting,
         getSortedRowModel: getSortedRowModel(),
@@ -36,6 +45,10 @@ export function DataTable<TData, TValue>({
         state: { 
             sorting,
             columnFilters,
+            pagination:{
+                pageIndex: page,
+                pageSize: limit,
+            },
         },
     })
 

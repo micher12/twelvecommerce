@@ -1,3 +1,5 @@
+"use client";
+
 import { Table } from "@tanstack/react-table"
 import {
     ChevronLeft,
@@ -14,16 +16,24 @@ import {
     SelectTrigger,
     SelectValue,
 } from "@/components/ui/select"
+import { useSearchParams, useRouter } from "next/navigation";
 
 interface DataTablePaginationProps<TData> {
-    table: Table<TData>
-    className?: string
+    table: Table<TData>;
+    className?: string;
 }
+
 
 export function DataTablePagination<TData>({
     table,
-    className
+    className,
 }: DataTablePaginationProps<TData>) {
+
+    const router = useRouter();
+    const searchParams = useSearchParams();
+    const page = searchParams?.get("page");
+    const limit = searchParams?.get("limit");
+
     return (
         <div className={`flex flex-col sm:flex-row sm:items-center justify-between px-2 ${className}`}>
             <div className="text-muted-foreground flex-1 text-sm">
@@ -36,7 +46,8 @@ export function DataTablePagination<TData>({
                     <Select
                         value={`${table.getState().pagination.pageSize}`}
                         onValueChange={(value) => {
-                            table.setPageSize(Number(value))
+                            const url = `?page=${page ?? 1}&limit=${value}`
+                            router.push(url);
                         }}
                     >
                         <SelectTrigger className="h-8 w-[70px]">
@@ -61,7 +72,12 @@ export function DataTablePagination<TData>({
                             variant="outline"
                             size="icon"
                             className="hidden size-8 lg:flex"
-                            onClick={() => table.setPageIndex(0)}
+                            onClick={() => {
+                                table.setPageIndex(0)
+
+                                const url = `?page=${1}&limit=${limit ?? 10}`
+                                router.push(url);
+                            }}
                             disabled={!table.getCanPreviousPage()}
                         >
                             <span className="sr-only">Go to first page</span>
@@ -71,7 +87,15 @@ export function DataTablePagination<TData>({
                             variant="outline"
                             size="icon"
                             className="size-8"
-                            onClick={() => table.previousPage()}
+                            onClick={() => {
+                                table.previousPage();
+
+                                const index = table.getState().pagination.pageIndex;
+
+                                const url = `?page=${index}&limit=${limit ?? 10}`
+                                router.push(url);
+                                
+                            }}
                             disabled={!table.getCanPreviousPage()}
                         >
                             <span className="sr-only">Go to previous page</span>
@@ -81,7 +105,14 @@ export function DataTablePagination<TData>({
                             variant="outline"
                             size="icon"
                             className="size-8"
-                            onClick={() => table.nextPage()}
+                            onClick={() => {
+                                table.nextPage()
+
+                                const index = table.getState().pagination.pageIndex+2;
+
+                                const url = `?page=${index}&limit=${limit ?? 10}`
+                                router.push(url);
+                            }}
                             disabled={!table.getCanNextPage()}
                         >
                             <span className="sr-only">Go to next page</span>
@@ -91,7 +122,12 @@ export function DataTablePagination<TData>({
                             variant="outline"
                             size="icon"
                             className="hidden size-8 lg:flex"
-                            onClick={() => table.setPageIndex(table.getPageCount() - 1)}
+                            onClick={() => {
+                                table.setPageIndex(table.getPageCount() - 1)
+
+                                const url = `?page=${table.getPageCount()}}&limit=${limit ?? 10}`
+                                router.push(url);
+                            }}
                             disabled={!table.getCanNextPage()}
                         >
                             <span className="sr-only">Go to last page</span>

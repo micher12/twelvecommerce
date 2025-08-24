@@ -1,6 +1,7 @@
 import { VariationChange } from "@/interfaces/modified-attributes";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { updateProduct } from "./update-product";
+import { ReadonlyURLSearchParams } from "next/navigation";
 
 interface updateProps {
     id: number
@@ -9,6 +10,7 @@ interface updateProps {
         newValue: string;
     }[]
     variations: VariationChange[]
+    params: ReadonlyURLSearchParams | null;
 }
 
 export function useUpdateProduct(){
@@ -17,17 +19,22 @@ export function useUpdateProduct(){
 
     return useMutation({
         mutationFn: async(data: updateProps)=>{
+            const params = data.params;
+            let limit = 10;
+            let page = 1;
+
+            if(params?.has("page") && params?.has("limit")){
+                limit = Number(params.get("limit"));
+                page = Number(params.get("page"));
+            }
+
             const res = await updateProduct(data);
 
-            return res;
+            return {res, page, limit};
         },
-        onMutate(data){
-            return data;
-        },
-        onSuccess(data, _variables, context) {
-            if(data?.sucesso){
-                queryClient.invalidateQueries({queryKey: ["single-product", context.id]});
-                queryClient.refetchQueries({queryKey: ["products", undefined, undefined]});
+        onSuccess({res, limit, page}) {
+            if(res.sucesso){
+                queryClient.refetchQueries({queryKey: ["products", undefined, undefined, page, limit]});
             }
         },
     })

@@ -13,15 +13,20 @@ interface PageProps {
     searchParams: Promise<{
         category?: string;
         subcategory?: string;
+        page?: number;
+        limit?: number;
     }>;
 }
 
 export default async function Products({searchParams}: PageProps){
 
-    const { category, subcategory } = await searchParams;
+    const { category, subcategory, page: prePage = 1, limit: preLimit = 10 } = await searchParams;
+
+    const page = Number(prePage);
+    const limit = Number(preLimit);
 
     const fetchProduct = async ()=>{
-        const res = await getProducts({category, subcategory});
+        const res = await getProducts({category, subcategory, page, limit});
 
         if(res.sucesso)
             return res.products;
@@ -44,7 +49,7 @@ export default async function Products({searchParams}: PageProps){
     const queryClient = getQueryClient();
 
     queryClient.prefetchQuery({
-        queryKey: ["products", category, subcategory],
+        queryKey: ["products", category, subcategory, page, limit],
         queryFn: fetchProduct
     })
 
@@ -65,7 +70,8 @@ export default async function Products({searchParams}: PageProps){
             </Button>
             <h2 className="text-3xl font-bold mt-5">Produtos cadastrados:</h2>
             
-            <ListProducts searchParams={{category, subcategory}} />
+
+            <ListProducts searchParams={{category, subcategory, page, limit}} />
         </div>
     )
 }

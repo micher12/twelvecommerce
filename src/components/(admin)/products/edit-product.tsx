@@ -16,7 +16,7 @@ import { useProductInterface } from "@/interfaces/use-product-interface";
 import { useGetAuthContext } from "@/lib/useAuthContext";
 import { useUpdateProduct } from "@/models/use-update-product";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { useQuery } from "@tanstack/react-query"
+import { useQuery, useQueryClient } from "@tanstack/react-query"
 import { Plus } from "lucide-react";
 import { InputNumber } from "primereact/inputnumber";
 import React, { useRef } from "react";
@@ -33,6 +33,7 @@ import { getFirebaseConfig } from "@/lib/use-firebase-config";
 import { getAuth } from "firebase/auth";
 import { v4 } from "uuid";
 import { updateImagesProducts } from "@/models/update-images-products";
+import { useSearchParams } from "next/navigation";
 
 type paramsProps = {
     id: number
@@ -58,10 +59,13 @@ export function EditProduct({id}: paramsProps){
     const { setAlert, setLoader } = useGetAuthContext() as UseAuthContextProps;
     const { mutateAsync: updateProduct } = useUpdateProduct();
 
+    const queryClient = useQueryClient();
+
     const [files, setFiles] = useState<FileWithPreview[] | null>(null);
     const [cape, setCape] = useState<{ type: "file" | "url"; value: FileWithPreview | string } | undefined>()
     const [urlsToDelete, setUrlsToDelete] = useState<string[]>([]);
     const updatedImage = useRef(false);
+    const params = useSearchParams();
 
    async function initMyApp(){
         try {
@@ -421,6 +425,8 @@ export function EditProduct({id}: paramsProps){
             try {
                 await updateImagesProducts({ urls: finalUrls, id_product: id });
                 updatedImage.current = true;
+
+                return finalUrls;
             } catch (error) {
                 console.error("Erro ao atualizar as imagens do produto:", error);
             }
@@ -440,7 +446,7 @@ export function EditProduct({id}: paramsProps){
             if(updatedImage.current)
                 return setAlert("warning", "Atualize a página para modificar a imagem novamente!");
 
-            await updateImages();
+            const urls = await updateImages();
 
             // update products:
             const productValues: useProductInterface = {
@@ -479,14 +485,15 @@ export function EditProduct({id}: paramsProps){
             }));
 
             const variations = getModifiedVariations(old, thisData.variations) as VariationChange[];
-
+            
             const chandeData = {
                 id: thisData.id_product,
                 changes,
-                variations
+                variations,
+                params
             }
 
-            const res = await updateProduct(chandeData)
+            const {res} = await updateProduct(chandeData)
             
             if(res?.warning && !updatedImage.current)
                 return setAlert("warning", res.warning);
@@ -494,6 +501,21 @@ export function EditProduct({id}: paramsProps){
             if(res?.erro)
                 return setAlert("erro", res.erro);
 
+            if(urls){
+                queryClient.setQueryData<useProductInterface[]>(["products", undefined, undefined, 1, 10],(prev) => {
+                    if(!prev) return prev;
+                    
+                    return prev.map((item)=>{
+                        if(item.id_product === thisData.id_product){
+                            return {...item, urls_product: JSON.stringify(urls)};
+                        }
+        
+                        return item;
+                    })
+                });
+
+                queryClient.refetchQueries({queryKey: ["single-product", thisData.id_product]});
+            }
 
             setAlert("sucesso", "Produto atualizado com sucesso!");
         } finally {
